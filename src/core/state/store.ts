@@ -25,6 +25,7 @@ interface EditorState {
   theme: 'vs-dark' | 'light';
   isCommandPaletteOpen: boolean;
   isTerminalOpen: boolean;
+  isSidebarOpen: boolean;
   cursorPosition: { line: number; column: number };
   autoSave: boolean;
 
@@ -40,6 +41,7 @@ interface EditorState {
   setTheme: (theme: 'vs-dark' | 'light') => void;
   toggleCommandPalette: () => void;
   toggleTerminal: () => void;
+  toggleSidebar: () => void;
   setCursorPosition: (line: number, column: number) => void;
   toggleAutoSave: () => void;
 }
@@ -71,6 +73,7 @@ export const useStore = create<EditorState>((set, get) => ({
   theme: (localStorage.getItem('theme') as any) || 'vs-dark',
   isCommandPaletteOpen: false,
   isTerminalOpen: true,
+  isSidebarOpen: true,
   cursorPosition: { line: 1, column: 1 },
   autoSave: true,
 
@@ -131,6 +134,7 @@ export const useStore = create<EditorState>((set, get) => ({
 
   toggleCommandPalette: () => set((state) => ({ isCommandPaletteOpen: !state.isCommandPaletteOpen })),
   toggleTerminal: () => set((state) => ({ isTerminalOpen: !state.isTerminalOpen })),
+  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   setCursorPosition: (line, column) => set({ cursorPosition: { line, column } }),
   toggleAutoSave: () => set((state) => ({ autoSave: !state.autoSave })),
 }));

@@ -9,9 +9,15 @@ import { Terminal } from './terminal/terminal';
 import { CommandPalette } from './command_palette/command_palette';
 import { Files, Search, GitBranch, Play, Settings, UserCircle, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export default function App() {
-  const { theme, isTerminalOpen, toggleTerminal } = useStore();
+  const { theme, isTerminalOpen, toggleTerminal, isSidebarOpen, toggleSidebar } = useStore();
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [terminalHeight, setTerminalHeight] = useState(240);
   const isResizing = useRef(false);
@@ -58,6 +64,14 @@ export default function App() {
     if (isResizing.current) {
       // Activity Bar Width (32px) + Outer Padding (12px) + Activity Bar Margin (12px) + Half Resizer (6px) = 62px
       const newWidth = e.clientX - 62; 
+      
+      // If dragged almost to the edge ( < 50px), collapse the sidebar
+      if (newWidth < 50) {
+        if (isSidebarOpen) toggleSidebar();
+        stopResizing();
+        return;
+      }
+      
       if (newWidth > 180 && newWidth < 600) {
         setSidebarWidth(newWidth);
       }
@@ -103,7 +117,15 @@ export default function App() {
       <div className="flex-1 flex overflow-hidden p-3 gap-0">
         {/* Activity Bar */}
         <div className="w-8 flex flex-col items-center py-4 space-y-4 text-[var(--color-text-tertiary)] select-none z-10 mr-3">
-          <div className="p-1 rounded-md bg-[var(--color-accent-glow)] text-[var(--color-accent-primary)] cursor-pointer transition-all duration-200 shadow-sm">
+          <div 
+            onClick={toggleSidebar}
+            className={cn(
+              "p-1 rounded-md cursor-pointer transition-all duration-200 shadow-sm",
+              isSidebarOpen 
+                ? "bg-[var(--color-accent-glow)] text-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
+                : "hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+            )}
+          >
             <Files size={24} strokeWidth={2} />
           </div>
           <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
@@ -129,18 +151,37 @@ export default function App() {
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div style={{ width: sidebarWidth }} className="flex-shrink-0 relative bg-[var(--color-bg-panel)]/60 backdrop-blur-2xl rounded-xl border border-[var(--color-border-subtle)] overflow-hidden shadow-2xl flex flex-col">
-          <Sidebar />
-        </div>
+        {/* Sidebar Group with Cinematic Animation */}
+        <AnimatePresence initial={false}>
+          {isSidebarOpen && (
+            <motion.div 
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: sidebarWidth + 12, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={isSidebarResizingActive 
+                ? { duration: 0 } 
+                : { duration: 0.32 + Math.min(0.1, sidebarWidth / 3000), ease: [0.16, 1, 0.3, 1] }
+              }
+              className="flex-shrink-0 flex overflow-hidden h-full"
+            >
+              {/* Actual Sidebar */}
+              <div 
+                style={{ width: sidebarWidth }} 
+                className="flex-shrink-0 relative bg-[var(--color-bg-panel)]/60 backdrop-blur-2xl rounded-xl border border-[var(--color-border-subtle)] overflow-hidden shadow-2xl flex flex-col h-full"
+              >
+                <Sidebar />
+              </div>
 
-        {/* Sidebar Resizer (In Gap) */}
-        <div 
-          onMouseDown={startResizing}
-          className={`w-3 flex-shrink-0 flex items-center justify-center cursor-col-resize group z-30 ${isSidebarResizingActive ? 'active-resize' : ''}`}
-        >
-          <div className={`w-[2px] h-full rounded-full transition-all duration-300 ${isSidebarResizingActive ? 'bg-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.6)]' : 'bg-transparent group-hover:bg-[var(--color-accent-primary)] shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`} />
-        </div>
+              {/* Sidebar Resizer (Stays locked inside the animated container for perfect gap consistency) */}
+              <div 
+                onMouseDown={startResizing}
+                className={`w-3 flex-shrink-0 flex items-center justify-center cursor-col-resize group z-30 ${isSidebarResizingActive ? 'active-resize' : ''}`}
+              >
+                <div className={`w-[2px] h-full rounded-full transition-all duration-300 ${isSidebarResizingActive ? 'bg-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.6)]' : 'bg-transparent group-hover:bg-[var(--color-accent-primary)] shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Main Content Area & Terminal */}
         <div className="flex-1 flex flex-col gap-0 overflow-hidden">

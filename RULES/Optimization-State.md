@@ -43,6 +43,14 @@ This document tracks the current implementation status and architectural benchma
     *   **Native Memory Density:** A C++ `FileNode` occupies roughly **150 bytes**, meaning even if you expand a folder with 1,000,000 files, the C++ heap stays under **150MB**.
 *   **Result:** Nitrogen is mathematically designed to be "Infinite." It can handle repositories that are physically too large for VS Code to even open.
 
+### 5. Layout Synchronization & Cinematic Easing
+*   **Strategy:** Maintain zero-drift panel alignment during complex UI transitions for a professional "hard-surface" feel.
+*   **Implementation:**
+    *   **Proportional Timing:** Animation durations scale dynamically with sidebar width (+0.1s max offset), ensuring a consistent "perceived velocity" for the user.
+    *   **Zero-Delay Resizing:** The animation engine is physically bypassed during active drag interactions (duration: 0ms), eliminating the "elastic lag" typical of Framer Motion default settings.
+    *   **Flex Balancing:** Wrapping the **Sidebar + Resizer** in a single `motion.div` unit ensures the 12px layout gap is never corrupted, even during high-frequency toggle events. 
+*   **Result:** The UI remains physically rigid and logically fluid. No layout jitter.
+
 ---
 
 ## 📊 Performance Benchmarks (Industry Comparison)

@@ -87,6 +87,9 @@
 - **Direct DOM Optimization:** Bypassed React's reconciliation loop by updating the blur CSS variable directly on the scroll container's style, maintaining a solid 144Hz performance.
 - **Absolute Cursor Tracking:** Calibrated the sidebar and terminal resizers to achieve pixel-perfect alignment. Sidebar width is now mathematically pinned at `-62px` and terminal at `-50px` offsets, ensuring the blue indicator stays exactly under the cursor tip.
 - **Z-Stacking & UI Integrity:** Fixed deep-seated z-index and translucency bugs. The sticky root header is now a solid "shield" (z-30) that correctly clips scrolling file nodes, and action icons (z-40) are protected from text-overlap.
+- **Cinematic Sidebar Architecture:** Implemented a `framer-motion` based animation engine for the explorer. The sidebar toggles with a **proportional duration curve** (0.32s to 0.42s) based on its width, providing a natural feeling of mass and momentum.
+- **Drag-to-Close Logic:** Engineered a "Snap-Trigger" for the explorer. Resizing the sidebar below **50px** automatically triggers a smooth collapse, matching industry-standard UX patterns from VS Code.
+- **Bypass-Resizing:** Optimized the React render loop to disable animation transitions during manual drag operations, achieving a perfect **0ms latency** between the cursor and the resizing boundary while preserving cinematic curves for toggle buttons.
 
 ---
 
