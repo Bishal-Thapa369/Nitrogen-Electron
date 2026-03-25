@@ -20,19 +20,30 @@
 - `/tsconfig.json` - TypeScript configuration for the frontend layers.
 - `/vite.config.ts` - Build configuration for the React frontend with API proxying.
 - `/index.html` - Entry point for the Chromium (Electron) frontend.
-- `/main.js` - Electron Main process entry point (ESM) that manages the window and native bridge.
-- `/preload.js` - Electron Preload script for secure IPC communication.
-- `/server.ts` - Mock backend server for handling file operations during development.
-- `/mock-fs.json` - Temporary JSON-based file system storage for the mock server.
+- `/CMakeLists.txt` - Root CMake build file for the C++ native addon (cmake-js).
+- `/main.js` - Electron Main process entry point (ESM) that manages the native C++ bridge (N-API).
+- `/preload.cjs` - Electron Preload script for secure IPC and native exposure.
 
-## 📂 src/ (Frontend & Core Shared)
-- `src/App.tsx` - Main React entry point for the editor UI.
-- `src/main.tsx` - Bootstrapper for the React application.
-- `src/index.css` - Global styling including Tailwind 4 themes and glassmorphism.
+## 📂 src/ui/ (Display Layer)
+- `src/ui/app.tsx` - Main React entry point for the editor UI.
+- `src/ui/main.tsx` - Bootstrapper for the React application.
+- `src/ui/styles/index.css` - Global styling including Tailwind 4 themes and custom glassmorphism.
+- `src/ui/sidebar/sidebar.tsx` - Sidebar component for recursive native file explorer.
+- `src/ui/editor/editor.tsx` - Monaco-based core editor rendering surface.
+- `src/ui/tabs/tabs.tsx` - Tab management UI.
+- `src/ui/status_bar/status_bar.tsx` - Informational status bar at the bottom.
+- `src/ui/top_bar/top_bar.tsx` - Application control bar at the top.
+- `src/ui/terminal/terminal.tsx` - Integrated terminal interface.
+- `src/ui/command_palette/command_palette.tsx` - Quick-action command interface.
 
-## 📂 src/core/ (C++ Backend Core)
-- `src/core/document/text_buffer/piece_table.hpp` - Header defining the `PieceTable` class and its Piece/Buffer descriptors.
-- `src/core/document/text_buffer/piece_table.cpp` - Implementation of the Piece Table buffer logic for $O(1)$ amortized edit performance.
+## 📂 src/core/ (C++ Backend & Logic)
+- `src/core/state/store.ts` - Central reactive state manager (Zustand).
+- `src/core/document/text_buffer/piece_table.hpp` - Header for Piece Table logic.
+- `src/core/document/text_buffer/piece_table.cpp` - Implementation of the Piece Table buffer logic.
+- `src/core/file_system/file_node.hpp` - FileNode struct for recursive tree representation.
+- `src/core/file_system/file_explorer.hpp` - FileExplorer class API (scan, expand, collapse, refresh).
+- `src/core/file_system/file_explorer.cpp` - Implementation using std::filesystem with depth-limited scanning.
+- `src/core/bridge/file_explorer_bridge.cpp` - N-API bridge exposing C++ FileExplorer to Node.js/Electron.
 
 ## 📂 scripts/ (Tooling)
 - `scripts/ram-usages.sh` - Utility task to monitor and audit current Electron/Node process memory usage.

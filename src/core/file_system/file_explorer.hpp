@@ -1,0 +1,85 @@
+#pragma once
+
+#include "file_node.hpp"
+#include <string>
+#include <functional>
+
+namespace nitrogen::core {
+
+/**
+ * @class FileExplorer
+ * @brief High-performance file system scanner and tree manager.
+ *
+ * Scans directories using std::filesystem and builds a FileNode tree.
+ * Supports depth-limited scanning for lazy-loading and immediate UI feedback.
+ */
+class FileExplorer {
+public:
+    explicit FileExplorer();
+    ~FileExplorer() = default;
+
+    // --- Core API ---
+
+    /**
+     * @brief Open a root directory and scan it to a specified depth.
+     * @param rootPath Absolute path to the directory to open.
+     * @param maxDepth Maximum depth to scan. 0 = root only, 1 = immediate children, etc.
+     */
+    void openDirectory(const std::string& rootPath, int maxDepth = 1);
+
+    /**
+     * @brief Expand a specific directory node by scanning its children.
+     *        This is the lazy-loading entry point.
+     * @param dirPath Absolute path of the directory to expand.
+     * @param maxDepth Maximum depth of children to scan from this point.
+     */
+    void expandDirectory(const std::string& dirPath, int maxDepth = 1);
+
+    /**
+     * @brief Collapse a directory by releasing its children from memory.
+     * @param dirPath Absolute path of the directory to collapse.
+     */
+    void collapseDirectory(const std::string& dirPath);
+
+    /**
+     * @brief Refresh a specific directory by re-scanning its contents.
+     * @param dirPath Absolute path of the directory to refresh.
+     */
+    void refreshDirectory(const std::string& dirPath);
+
+    // --- Query API ---
+
+    /**
+     * @brief Get the root node of the file tree.
+     * @return Const pointer to the root FileNode, or nullptr if no directory is open.
+     */
+    const FileNode* getRoot() const;
+
+    /**
+     * @brief Find a node by its absolute path.
+     * @param path Absolute path to search for.
+     * @return Const pointer to the FileNode, or nullptr if not found.
+     */
+    const FileNode* findNode(const std::string& path) const;
+
+private:
+    std::unique_ptr<FileNode> m_root;
+
+    /**
+     * @brief Internal recursive scanner.
+     * @param node The parent node to scan children into.
+     * @param currentDepth The current recursion depth.
+     * @param maxDepth The maximum recursion depth.
+     */
+    void scanDirectory(FileNode* node, int currentDepth, int maxDepth);
+
+    /**
+     * @brief Internal recursive finder.
+     * @param node The node to start searching from.
+     * @param path The absolute path to find.
+     * @return Mutable pointer to the found node, or nullptr.
+     */
+    FileNode* findNodeMutable(FileNode* node, const std::string& path) const;
+};
+
+} // namespace nitrogen::core

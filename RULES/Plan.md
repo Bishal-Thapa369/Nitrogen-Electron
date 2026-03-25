@@ -47,7 +47,8 @@ By moving all calculations to C++, the Electron process behaves like a single br
 ---
 
 ## 4. Current Roadmap
-1. **Shell**: Complete Electron scaffolding and secure IPC.
-2. **Core**: Finalize C++ Piece Table implementation.
-3. **Bridge**: Establish N-API connection between Electron and C++ Core.
-4. **Display**: Finalize React/Monaco-alternative rendering surface.
+1. [x] **Shell**: Electron scaffolding and secure IPC completed.
+2. [x] **File Explorer**: Native C++ bridge for filesystem logic completed.
+3. [/] **Bridge**: Finalize N-API bridge for the Piece Table buffer.
+4. [ ] **Display**: Finalize custom high-performance rendering surface (React/Canvas alternative).
+

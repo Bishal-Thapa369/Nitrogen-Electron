@@ -1,9 +1,14 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load the C++ native addon
+const require = createRequire(import.meta.url);
+const fileExplorer = require('./build/Release/nitrogen_file_explorer.node');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -11,7 +16,7 @@ function createWindow() {
     height: 800,
     backgroundColor: '#000000',
     frame: false, // Frameless window for custom TopBar
-    titleBarStyle: 'hidden', // Still use hidden for macOS traffic lights if needed, but we'll use custom for Linux
+    titleBarStyle: 'hidden',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -32,6 +37,58 @@ function createWindow() {
     }
   });
   ipcMain.on('window-close', () => win.close());
+
+  // ---- File Explorer IPC ----
+
+  // Open Folder Dialog → returns the C++ tree or null
+  ipcMain.handle('open-folder-dialog', async () => {
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openDirectory'],
+      title: 'Open Folder',
+    });
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return null;
+    }
+
+    const folderPath = result.filePaths[0];
+    const tree = fileExplorer.openDirectory(folderPath, 1);
+    return tree;
+  });
+
+  // Expand a directory (lazy-load)
+  ipcMain.handle('expand-directory', async (_event, dirPath) => {
+    const node = fileExplorer.expandDirectory(dirPath, 1);
+    return node;
+  });
+
+  // Collapse a directory (free memory)
+  ipcMain.handle('collapse-directory', async (_event, dirPath) => {
+    fileExplorer.collapseDirectory(dirPath);
+    return true;
+  });
+
+  // Refresh a directory
+  ipcMain.handle('refresh-directory', async (_event, dirPath) => {
+    const node = fileExplorer.refreshDirectory(dirPath);
+    return node;
+  });
+
+  // Get the full current tree
+  ipcMain.handle('get-tree', async () => {
+    return fileExplorer.getTree();
+  });
+
+  // Read a file's content
+  ipcMain.handle('read-file', async (_event, filePath) => {
+    const fs = await import('fs/promises');
+    try {
+      const content = await fs.readFile(filePath, 'utf-8');
+      return content;
+    } catch {
+      return null;
+    }
+  });
 }
 
 app.whenReady().then(createWindow);
