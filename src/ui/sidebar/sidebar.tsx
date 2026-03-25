@@ -142,7 +142,7 @@ export const Sidebar: React.FC = () => {
           {fileTree ? (
             <div className="pb-4">
               {/* Root Folder Header */}
-              <div className="flex items-center px-3 sticky top-0 bg-[var(--color-bg-panel)] z-30 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-all duration-150 group/root h-[32px] shadow-sm">
+              <div className="flex items-center px-3 sticky top-0 bg-[var(--color-bg-panel)] z-30 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-all duration-150 group/root h-[32px]">
                 <ChevronDown size={14} className="mr-1 text-[var(--color-text-tertiary)]" />
                 <span className="truncate flex-1">{fileTree.name}</span>
                 
