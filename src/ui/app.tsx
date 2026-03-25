@@ -42,6 +42,7 @@ export default function App() {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', stopResizing);
     document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
   };
 
   const stopResizing = () => {
@@ -50,17 +51,20 @@ export default function App() {
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', stopResizing);
     document.body.style.cursor = 'default';
+    document.body.style.userSelect = 'auto';
   };
 
   const handleMouseMove = (e: MouseEvent) => {
     if (isResizing.current) {
-      const newWidth = e.clientX - 44; // Activity Bar (32px) + Padding (12px) = 44px
+      // Activity Bar Width (32px) + Outer Padding (12px) + Activity Bar Margin (12px) + Half Resizer (6px) = 62px
+      const newWidth = e.clientX - 62; 
       if (newWidth > 180 && newWidth < 600) {
         setSidebarWidth(newWidth);
       }
     }
     if (isTerminalResizing.current) {
-      const newHeight = window.innerHeight - e.clientY - 32; // Adjusted for status bar
+      // Status Bar (32px) + Bottom Padding (12px) + Half of Resizer Height (6px) = 50px
+      const newHeight = window.innerHeight - e.clientY - 50; 
       if (newHeight > 100 && newHeight < window.innerHeight - 200) {
         setTerminalHeight(newHeight);
       }
@@ -73,6 +77,7 @@ export default function App() {
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', stopTerminalResizing);
     document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
   };
 
   const stopTerminalResizing = () => {
@@ -81,6 +86,7 @@ export default function App() {
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', stopTerminalResizing);
     document.body.style.cursor = 'default';
+    document.body.style.userSelect = 'auto';
   };
 
   return (
