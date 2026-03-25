@@ -14,6 +14,7 @@ static Napi::Object FileNodeToNapi(Napi::Env env, const nitrogen::core::FileNode
     obj.Set("isDirectory", Napi::Boolean::New(env, node->isDirectory));
     obj.Set("size", Napi::Number::New(env, static_cast<double>(node->size)));
     obj.Set("isLoaded", Napi::Boolean::New(env, node->isLoaded));
+    obj.Set("typeId", Napi::Number::New(env, static_cast<double>(node->typeId)));
 
     Napi::Array children = Napi::Array::New(env, node->children.size());
     for (size_t i = 0; i < node->children.size(); ++i) {
@@ -134,6 +135,22 @@ Napi::Value GetTree(const Napi::CallbackInfo& info) {
     return FileNodeToNapi(env, root);
 }
 
+// getExtensions(): { [id: number]: string }
+Napi::Value GetExtensions(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    if (!g_explorer) return Napi::Object::New(env); // Return empty object
+
+    const auto& extMap = g_explorer->getExtensionMap();
+    Napi::Object obj = Napi::Object::New(env);
+
+    for (const auto& [ext, id] : extMap) {
+        obj.Set(std::to_string(id), Napi::String::New(env, ext));
+    }
+
+    return obj;
+}
+
 // ---------------------------------------------------------------------------
 // Module Registration
 // ---------------------------------------------------------------------------
@@ -143,6 +160,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
     exports.Set("collapseDirectory", Napi::Function::New(env, CollapseDirectory));
     exports.Set("refreshDirectory", Napi::Function::New(env, RefreshDirectory));
     exports.Set("getTree", Napi::Function::New(env, GetTree));
+    exports.Set("getExtensions", Napi::Function::New(env, GetExtensions));
     return exports;
 }
 

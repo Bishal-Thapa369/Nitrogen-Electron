@@ -79,6 +79,11 @@ function createWindow() {
     return fileExplorer.getTree();
   });
 
+  // Get dynamic extension map from C++
+  ipcMain.handle('get-extensions', async () => {
+    return fileExplorer.getExtensions();
+  });
+
   // Read a file's content
   ipcMain.handle('read-file', async (_event, filePath) => {
     const fs = await import('fs/promises');

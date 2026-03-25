@@ -3,6 +3,7 @@
 #include "file_node.hpp"
 #include <string>
 #include <functional>
+#include <unordered_map>
 
 namespace nitrogen::core {
 
@@ -62,8 +63,19 @@ public:
      */
     const FileNode* findNode(const std::string& path) const;
 
+    /**
+     * @brief Get the dynamic extension mapping generated during scan.
+     * @return Const reference to the extension map (string -> id).
+     */
+    const std::unordered_map<std::string, uint16_t>& getExtensionMap() const;
+
 private:
     std::unique_ptr<FileNode> m_root;
+
+    std::unordered_map<std::string, uint16_t> m_extensionMap;
+    uint16_t m_nextExtensionId = 2; // 0 = unknown, 1 = folder
+
+    uint16_t registerExtension(const std::string& name, bool isDir);
 
     /**
      * @brief Internal recursive scanner.

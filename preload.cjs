@@ -12,5 +12,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   collapseDirectory: (dirPath) => ipcRenderer.invoke('collapse-directory', dirPath),
   refreshDirectory: (dirPath) => ipcRenderer.invoke('refresh-directory', dirPath),
   getTree: () => ipcRenderer.invoke('get-tree'),
+  getExtensions: () => ipcRenderer.invoke('get-extensions'),
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
 });

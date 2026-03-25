@@ -10,6 +10,7 @@ interface Window {
     collapseDirectory: (dirPath: string) => Promise<any>;
     refreshDirectory: (dirPath: string) => Promise<any>;
     getTree: () => Promise<any>;
+    getExtensions: () => Promise<Record<string, string>>;
     readFile: (filePath: string) => Promise<string | null>;
   };
 }

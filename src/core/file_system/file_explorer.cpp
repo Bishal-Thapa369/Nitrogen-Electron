@@ -19,7 +19,7 @@ void FileExplorer::openDirectory(const std::string& rootPath, int maxDepth) {
         throw std::runtime_error("FileExplorer::openDirectory: path does not exist or is not a directory: " + rootPath);
     }
 
-    m_root = std::make_unique<FileNode>(p.filename().string(), rootPath, true);
+    m_root = std::make_unique<FileNode>(p.filename().string(), rootPath, true, 1);
     scanDirectory(m_root.get(), 0, maxDepth);
     m_root->isLoaded = true;
 }
@@ -64,9 +64,35 @@ const FileNode* FileExplorer::findNode(const std::string& path) const {
     return findNodeMutable(m_root.get(), path);
 }
 
+const std::unordered_map<std::string, uint16_t>& FileExplorer::getExtensionMap() const {
+    return m_extensionMap;
+}
+
 // ---------------------------------------------------------------------------
 // Internal Implementation
 // ---------------------------------------------------------------------------
+
+uint16_t FileExplorer::registerExtension(const std::string& name, bool isDir) {
+    if (isDir) return 1;
+    
+    auto dotPos = name.find_last_of('.');
+    if (dotPos == std::string::npos || dotPos == 0 || dotPos == name.length() - 1) {
+        return 0; // Unknown / no extension
+    }
+    
+    std::string ext = name.substr(dotPos + 1);
+    // Convert to lowercase
+    for(auto& c : ext) c = std::tolower(c);
+
+    auto it = m_extensionMap.find(ext);
+    if (it != m_extensionMap.end()) {
+        return it->second;
+    }
+    
+    uint16_t newId = m_nextExtensionId++;
+    m_extensionMap[ext] = newId;
+    return newId;
+}
 
 void FileExplorer::scanDirectory(FileNode* node, int currentDepth, int maxDepth) {
     if (currentDepth >= maxDepth) return;
@@ -87,10 +113,13 @@ void FileExplorer::scanDirectory(FileNode* node, int currentDepth, int maxDepth)
             if (entryEc) fileSize = 0;
         }
 
+        uint16_t typeId = registerExtension(entryPath.filename().string(), isDir);
+
         auto child = std::make_unique<FileNode>(
             entryPath.filename().string(),
             entryPath.string(),
             isDir,
+            typeId,
             fileSize
         );
 

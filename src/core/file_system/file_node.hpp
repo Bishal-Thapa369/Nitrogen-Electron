@@ -21,15 +21,17 @@ struct FileNode {
     bool isDirectory;
     uint64_t size;           // File size in bytes (0 for directories)
     bool isLoaded;           // Whether children have been scanned (directories only)
+    uint16_t typeId;         // Dynamically assigned ID for rendering
 
     std::vector<std::unique_ptr<FileNode>> children;
 
-    FileNode(std::string name, std::string path, bool isDir, uint64_t size = 0)
+    FileNode(std::string name, std::string path, bool isDir, uint16_t typeId, uint64_t size = 0)
         : name(std::move(name))
         , path(std::move(path))
         , isDirectory(isDir)
         , size(size)
-        , isLoaded(false) {}
+        , isLoaded(false)
+        , typeId(typeId) {}
 
     // Sort children: directories first (alphabetical), then files (alphabetical)
     void sortChildren() {

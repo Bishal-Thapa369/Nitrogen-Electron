@@ -7,6 +7,7 @@ export interface FileTreeNode {
   isDirectory: boolean;
   size: number;
   isLoaded: boolean;
+  typeId?: number; // Precomputed in C++ for flyweight icon rendering
   children: FileTreeNode[];
 }
 
@@ -15,6 +16,7 @@ interface EditorState {
   fileTree: FileTreeNode | null;
   rootPath: string | null;
   expandedFolders: string[];  // Set of expanded directory paths
+  extensionMap: Record<number, string>; // Maps C++ typeId to string extension
 
   // Editor State
   openTabs: { path: string; name: string }[];
@@ -28,7 +30,8 @@ interface EditorState {
 
   // Actions
   setFileTree: (tree: FileTreeNode | null, rootPath: string | null) => void;
-  updateNode: (path: string, updatedNode: FileTreeNode) => void;
+  updateExtensionMap: () => Promise<void>;
+  updateNode: (path: string, updatedNode: FileTreeNode) => Promise<void>;
   toggleFolder: (dirPath: string) => void;
   openFile: (filePath: string, fileName: string) => void;
   closeFile: (filePath: string) => void;
@@ -61,6 +64,7 @@ export const useStore = create<EditorState>((set, get) => ({
   fileTree: null,
   rootPath: null,
   expandedFolders: [],
+  extensionMap: {},
   openTabs: [],
   activeFilePath: null,
   activeFileContent: null,
@@ -70,12 +74,25 @@ export const useStore = create<EditorState>((set, get) => ({
   cursorPosition: { line: 1, column: 1 },
   autoSave: true,
 
-  setFileTree: (tree, rootPath) => set({ fileTree: tree, rootPath, expandedFolders: [] }),
+  setFileTree: (tree, rootPath) => {
+    set({ fileTree: tree, rootPath, expandedFolders: [] });
+    get().updateExtensionMap();
+  },
 
-  updateNode: (path, updatedNode) => {
+  updateExtensionMap: async () => {
+    try {
+      const exts = await window.electronAPI.getExtensions();
+      set({ extensionMap: exts as unknown as Record<number, string> });
+    } catch (err) {
+      console.error('Failed to sync extension map', err);
+    }
+  },
+
+  updateNode: async (path, updatedNode) => {
     const { fileTree } = get();
     if (!fileTree) return;
     set({ fileTree: updateTreeNode(fileTree, path, updatedNode) });
+    await get().updateExtensionMap();
   },
 
   toggleFolder: (dirPath) => {

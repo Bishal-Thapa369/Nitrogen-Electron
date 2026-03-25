@@ -35,13 +35,15 @@ const getIconByType = (typeId: number | undefined, isDirectory: boolean) => {
 };
 
 const ITEM_HEIGHT = 24; // Fixed height for each virtualized row
-const OVERSCAN = 10;    // Number of extra rows to render above/below viewport
+const OVERSCAN = 30;    // Increased buffer (60 total) for smoother high-speed scrolls
 
 export const Sidebar: React.FC = () => {
   const { fileTree, expandedFolders, toggleFolder, openFile, activeFilePath, updateNode } = useStore();
   
   // Virtualization State
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollResetRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollTopRef = useRef(0);
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
 
@@ -136,7 +138,28 @@ export const Sidebar: React.FC = () => {
         {/* Scrollable Area */}
         <div 
           ref={containerRef}
-          onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+          onScroll={(e) => {
+            const currentTop = e.currentTarget.scrollTop;
+            const delta = Math.abs(currentTop - lastScrollTopRef.current);
+            setScrollTop(currentTop);
+            
+            // Calculate and apply cinematic motion blur (Direct DOM update for performance)
+            // v < 50 = no blur, v = 500 = 1.5px blur, cap at 3px
+            const blurAmount = Math.min(3, delta / 150);
+            if (e.currentTarget) {
+              e.currentTarget.style.setProperty('--scroll-blur', `${blurAmount}px`);
+              
+              // Reset blur after scrolling stops
+              if (scrollResetRef.current) clearTimeout(scrollResetRef.current);
+              scrollResetRef.current = setTimeout(() => {
+                if (containerRef.current) {
+                  containerRef.current.style.setProperty('--scroll-blur', '0px');
+                }
+              }, 50);
+            }
+            
+            lastScrollTopRef.current = currentTop;
+          }}
           className="flex-1 overflow-y-auto custom-scrollbar relative"
         >
           {fileTree ? (
@@ -163,8 +186,15 @@ export const Sidebar: React.FC = () => {
                 </div>
               </div>
 
-              {/* Virtualized Tree Container */}
-              <div style={{ height: `${totalHeight}px`, position: 'relative', width: '100%' }}>
+              {/* Virtualized Tree Container with Motion Blur Layering */}
+              <div style={{ 
+                height: `${totalHeight}px`, 
+                position: 'relative', 
+                width: '100%',
+                filter: 'blur(var(--scroll-blur, 0px))',
+                transition: 'filter 0.1s ease-out',
+                willChange: 'filter, transform'
+              }}>
                 {visibleItems.map((item, index) => {
                   const { node, level } = item;
                   const absoluteIndex = startIndex + index;
