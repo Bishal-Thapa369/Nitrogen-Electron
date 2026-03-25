@@ -28,6 +28,8 @@
 - **Build System:** Integrated Vite into the Electron dev cycle via `concurrently`.
 - **Backend Sync:** Preserved the C++ Piece Table core and the mock `server.ts`.
 - **Tooling Implementation:** Added `scripts/ram-usages.sh` for real-time memory auditing.
+- **Project Distribution:** Initialized Git and created the **[Nitrogen-Electron](https://github.com/Bishal-Thapa369/Nitrogen-Electron)** repository on GitHub.
+- **Initial Commit:** Successfully pushed the full structure (C++ Core, Electron Shell, and React UI) to the cloud.
 
 ---
 
