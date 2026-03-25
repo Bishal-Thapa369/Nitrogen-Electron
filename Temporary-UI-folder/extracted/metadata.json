@@ -1,0 +1,5 @@
+{
+  "name": "CodeWeaver",
+  "description": "A modern, browser-based code editor inspired by Visual Studio Code with Monaco Editor integration.",
+  "requestFramePermissions": []
+}
