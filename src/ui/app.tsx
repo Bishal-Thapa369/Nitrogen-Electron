@@ -16,6 +16,8 @@ export default function App() {
   const [terminalHeight, setTerminalHeight] = useState(240);
   const isResizing = useRef(false);
   const isTerminalResizing = useRef(false);
+  const [isSidebarResizingActive, setIsSidebarResizingActive] = useState(false);
+  const [isTerminalResizingActive, setIsTerminalResizingActive] = useState(false);
 
 
   useEffect(() => {
@@ -36,6 +38,7 @@ export default function App() {
 
   const startResizing = (_e: React.MouseEvent) => {
     isResizing.current = true;
+    setIsSidebarResizingActive(true);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', stopResizing);
     document.body.style.cursor = 'col-resize';
@@ -43,6 +46,7 @@ export default function App() {
 
   const stopResizing = () => {
     isResizing.current = false;
+    setIsSidebarResizingActive(false);
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', stopResizing);
     document.body.style.cursor = 'default';
@@ -50,7 +54,7 @@ export default function App() {
 
   const handleMouseMove = (e: MouseEvent) => {
     if (isResizing.current) {
-      const newWidth = e.clientX - 48; // Adjusted for padding and activity bar
+      const newWidth = e.clientX - 44; // Activity Bar (32px) + Padding (12px) = 44px
       if (newWidth > 180 && newWidth < 600) {
         setSidebarWidth(newWidth);
       }
@@ -65,6 +69,7 @@ export default function App() {
 
   const startTerminalResizing = (_e: React.MouseEvent) => {
     isTerminalResizing.current = true;
+    setIsTerminalResizingActive(true);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', stopTerminalResizing);
     document.body.style.cursor = 'row-resize';
@@ -72,6 +77,7 @@ export default function App() {
 
   const stopTerminalResizing = () => {
     isTerminalResizing.current = false;
+    setIsTerminalResizingActive(false);
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', stopTerminalResizing);
     document.body.style.cursor = 'default';
@@ -125,9 +131,9 @@ export default function App() {
         {/* Sidebar Resizer (In Gap) */}
         <div 
           onMouseDown={startResizing}
-          className="w-3 flex-shrink-0 flex items-center justify-center cursor-col-resize group z-30"
+          className={`w-3 flex-shrink-0 flex items-center justify-center cursor-col-resize group z-30 ${isSidebarResizingActive ? 'active-resize' : ''}`}
         >
-          <div className="w-[2px] h-full rounded-full bg-transparent group-hover:bg-[var(--color-accent-primary)] transition-all duration-300 shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+          <div className={`w-[2px] h-full rounded-full transition-all duration-300 ${isSidebarResizingActive ? 'bg-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.6)]' : 'bg-transparent group-hover:bg-[var(--color-accent-primary)] shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`} />
         </div>
 
         {/* Main Content Area & Terminal */}
@@ -147,9 +153,9 @@ export default function App() {
                 {/* Terminal Resizer (In Gap) */}
                 <div 
                   onMouseDown={startTerminalResizing}
-                  className="h-3 flex-shrink-0 flex flex-col items-center justify-center cursor-row-resize group z-30"
+                  className={`h-3 flex-shrink-0 flex flex-col items-center justify-center cursor-row-resize group z-30 ${isTerminalResizingActive ? 'active-resize' : ''}`}
                 >
-                  <div className="h-[2px] w-full rounded-full bg-transparent group-hover:bg-[var(--color-accent-primary)] transition-all duration-300 shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                  <div className={`h-[2px] w-full rounded-full transition-all duration-300 ${isTerminalResizingActive ? 'bg-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.6)]' : 'bg-transparent group-hover:bg-[var(--color-accent-primary)] shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`} />
                 </div>
                 
                 <motion.div 
