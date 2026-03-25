@@ -88,9 +88,9 @@ export default function App() {
     >
       <TopBar />
       
-      <div className="flex-1 flex overflow-hidden p-3 gap-3">
+      <div className="flex-1 flex overflow-hidden p-3 gap-0">
         {/* Activity Bar */}
-        <div className="w-8 flex flex-col items-center py-4 space-y-4 text-[var(--color-text-tertiary)] select-none z-10">
+        <div className="w-8 flex flex-col items-center py-4 space-y-4 text-[var(--color-text-tertiary)] select-none z-10 mr-3">
           <div className="p-1 rounded-md bg-[var(--color-accent-glow)] text-[var(--color-accent-primary)] cursor-pointer transition-all duration-200 shadow-sm">
             <Files size={24} strokeWidth={2} />
           </div>
@@ -120,14 +120,18 @@ export default function App() {
         {/* Sidebar */}
         <div style={{ width: sidebarWidth }} className="flex-shrink-0 relative bg-[var(--color-bg-panel)]/60 backdrop-blur-2xl rounded-xl border border-[var(--color-border-subtle)] overflow-hidden shadow-2xl flex flex-col">
           <Sidebar />
-          <div 
-            onMouseDown={startResizing}
-            className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-[var(--color-accent-primary)] transition-colors duration-300 z-20 opacity-0 hover:opacity-100"
-          />
+        </div>
+
+        {/* Sidebar Resizer (In Gap) */}
+        <div 
+          onMouseDown={startResizing}
+          className="w-3 flex-shrink-0 flex items-center justify-center cursor-col-resize group z-30"
+        >
+          <div className="w-[2px] h-full rounded-full bg-transparent group-hover:bg-[var(--color-accent-primary)] transition-all duration-300 shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
         </div>
 
         {/* Main Content Area & Terminal */}
-        <div className="flex-1 flex flex-col gap-3 overflow-hidden">
+        <div className="flex-1 flex flex-col gap-0 overflow-hidden">
           {/* Editor */}
           <div className="flex-1 flex flex-col bg-[var(--color-bg-surface)]/90 backdrop-blur-2xl rounded-xl border border-[var(--color-border-subtle)] overflow-hidden shadow-2xl relative">
             <Tabs />
@@ -139,19 +143,25 @@ export default function App() {
           {/* Terminal */}
           <AnimatePresence>
             {isTerminalOpen && (
-              <motion.div 
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: terminalHeight, opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className="flex-shrink-0 relative flex flex-col bg-[var(--color-bg-panel)]/60 backdrop-blur-2xl rounded-xl border border-[var(--color-border-subtle)] overflow-hidden shadow-2xl"
-              >
+              <>
+                {/* Terminal Resizer (In Gap) */}
                 <div 
                   onMouseDown={startTerminalResizing}
-                  className="absolute -top-1.5 left-0 w-full h-3 cursor-row-resize hover:bg-[var(--color-accent-primary)] transition-colors duration-300 z-20 opacity-0 hover:opacity-100"
-                />
-                <Terminal />
-              </motion.div>
+                  className="h-3 flex-shrink-0 flex flex-col items-center justify-center cursor-row-resize group z-30"
+                >
+                  <div className="h-[2px] w-full rounded-full bg-transparent group-hover:bg-[var(--color-accent-primary)] transition-all duration-300 shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                </div>
+                
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: terminalHeight, opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex-shrink-0 relative flex flex-col bg-[var(--color-bg-panel)]/60 backdrop-blur-2xl rounded-xl border border-[var(--color-border-subtle)] overflow-hidden shadow-2xl"
+                >
+                  <Terminal />
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
         </div>
@@ -162,4 +172,3 @@ export default function App() {
     </div>
   );
 }
-
