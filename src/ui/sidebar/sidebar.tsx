@@ -144,8 +144,8 @@ export const Sidebar: React.FC = () => {
             setScrollTop(currentTop);
             
             // Calculate and apply cinematic motion blur (Direct DOM update for performance)
-            // v < 50 = no blur, v = 500 = 1.5px blur, cap at 3px
-            const blurAmount = Math.min(3, delta / 150);
+            // v < 50 = no blur, v = 225 = 1.5px blur, cap at 1.5px
+            const blurAmount = Math.min(1.5, delta / 150);
             if (e.currentTarget) {
               e.currentTarget.style.setProperty('--scroll-blur', `${blurAmount}px`);
               

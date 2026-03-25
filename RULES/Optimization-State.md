@@ -21,7 +21,7 @@ This document tracks the current implementation status and architectural benchma
     *   **Viewport Rendering:** Only ~35-40 rows (what fits on the screen) are ever generated in the HTML.
     *   **Overscan Buffer:** The system maintains a **30-file safety buffer** (60 total) above and below the visible area, ensuring the viewport is always populated even during superhuman-speed scrolling. 
     *   **Recycling:** As the user scrolls, React "recycles" the existing DOM nodes, instantly swapping their content using the C++ pre-calculated metadata.
-    *   **Cinematic Motion Blur:** Uses a high-performance, velocity-indexed `blur()` filter (up to 3px) to hide re-render latency and bridge the "Virtualization Gap" during extreme scrolls.
+    *   **Cinematic Motion Blur:** Uses a high-performance, velocity-indexed `blur()` filter (up to 1.5px) to hide re-render latency and bridge the "Virtualization Gap" during extreme scrolls.
 *   **Result:** Scrolling through 1,000,000 files feels identical to scrolling through 10 files. **Zero UI Jag.** Smoothness is now perceptually superior to VS Code due to motion-blur assistance.
 
 ### 3. Native Calculation Offloading
