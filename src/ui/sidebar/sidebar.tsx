@@ -1,137 +1,130 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useStore, FileTreeNode } from '../../core/state/store';
-import { FileCode, Folder, ChevronRight, ChevronDown, FileJson, FileType2, FileText, FileImage, FileCode2, FileTerminal, FolderOpen, MoreHorizontal, FilePlus2, FolderPlus, RefreshCw, Folders } from 'lucide-react';
+import { FileCode, Folder, ChevronRight, ChevronDown, FolderOpen, MoreHorizontal, FilePlus2, FolderPlus, RefreshCw, Folders } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { motion, AnimatePresence } from 'motion/react';
+
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const getFileIcon = (filename: string) => {
-  if (filename.endsWith('.js') || filename.endsWith('.jsx')) return <FileCode2 size={14} className="text-yellow-400" />;
-  if (filename.endsWith('.ts') || filename.endsWith('.tsx')) return <FileType2 size={14} className="text-blue-400" />;
-  if (filename.endsWith('.json')) return <FileJson size={14} className="text-green-400" />;
-  if (filename.endsWith('.md')) return <FileText size={14} className="text-slate-400" />;
-  if (filename.endsWith('.css')) return <FileCode size={14} className="text-pink-400" />;
-  if (filename.endsWith('.html')) return <FileCode size={14} className="text-orange-400" />;
-  if (filename.endsWith('.sh') || filename.endsWith('.bash')) return <FileTerminal size={14} className="text-emerald-400" />;
-  if (filename.match(/\.(png|jpe?g|svg|gif)$/i)) return <FileImage size={14} className="text-purple-400" />;
-  if (filename.endsWith('.cpp') || filename.endsWith('.hpp') || filename.endsWith('.h') || filename.endsWith('.c')) return <FileCode size={14} className="text-sky-400" />;
-  if (filename.endsWith('.py')) return <FileCode2 size={14} className="text-yellow-300" />;
-  return <FileCode size={14} className="text-[var(--color-text-tertiary)]" />;
-};
+// Algorithmic Icon Assignment (No Hardcoding)
+// The system automatically maps any C++ calculated typeId to a distinct, consistent color.
+const FILE_COLORS = [
+  '#38bdf8', '#facc15', '#60a5fa', '#4ade80', '#94a3b8', 
+  '#f472b6', '#fb923c', '#34d399', '#c084fc', '#fde047',
+  '#818cf8', '#2dd4bf', '#a78bfa', '#f87171', '#fb7185',
+  '#e879f9', '#22d3ee', '#86efac', '#fca5a5', '#d8b4fe'
+];
 
-// Recursive tree node renderer
-const TreeNode: React.FC<{
-  node: FileTreeNode;
-  level: number;
-}> = ({ node, level }) => {
-  const { expandedFolders, toggleFolder, openFile, activeFilePath, updateNode } = useStore();
-  const isExpanded = expandedFolders.includes(node.path);
-
-  const handleFolderClick = async () => {
-    toggleFolder(node.path);
-
-    // Lazy-load: if not yet loaded, fetch children from C++ backend
-    if (!isExpanded && !node.isLoaded && node.isDirectory) {
-      try {
-        const expandedNode = await window.electronAPI.expandDirectory(node.path);
-        if (expandedNode) {
-          updateNode(node.path, expandedNode);
-        }
-      } catch (err) {
-        console.error('Failed to expand directory:', err);
-      }
-    }
-  };
-
-  const handleFileClick = async () => {
-    openFile(node.path, node.name);
-    try {
-      const content = await window.electronAPI.readFile(node.path);
-      if (content !== null) {
-        useStore.getState().setActiveFileContent(content);
-      }
-    } catch (err) {
-      console.error('Failed to read file:', err);
-    }
-  };
-
-  if (node.isDirectory) {
-    return (
-      <div>
-        <div
-          className="flex items-center py-1 hover:bg-[var(--color-bg-hover)] cursor-pointer text-[13px] transition-colors duration-150 group"
-          style={{ paddingLeft: `${level * 16 + 12}px` }}
-          onClick={handleFolderClick}
-        >
-          <motion.div
-            animate={{ rotate: isExpanded ? 0 : -90 }}
-            transition={{ duration: 0.15 }}
-            className="mr-1 opacity-50 group-hover:opacity-100"
-          >
-            <ChevronDown size={14} strokeWidth={2.5} />
-          </motion.div>
-          <Folder size={14} strokeWidth={2} className="mr-2 text-[var(--color-accent-primary)]" />
-          <span className="truncate flex-1 font-medium text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)]">
-            {node.name}
-          </span>
-        </div>
-
-        <AnimatePresence>
-          {isExpanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              {node.children.map((child) => (
-                <TreeNode key={child.path} node={child} level={level + 1} />
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    );
+const getIconByType = (typeId: number | undefined, isDirectory: boolean) => {
+  if (isDirectory || typeId === 1) {
+    return <Folder size={14} strokeWidth={2} className="text-[var(--color-accent-primary)]" />;
+  }
+  
+  if (typeId === undefined || typeId === 0) {
+    return <FileCode size={14} className="text-[var(--color-text-tertiary)]" />;
   }
 
-  // File node
-  return (
-    <div
-      className={cn(
-        "group flex items-center py-1 cursor-pointer text-[13px] transition-all duration-150 relative",
-        activeFilePath === node.path
-          ? "bg-[var(--color-accent-glow)] text-[var(--color-text-primary)] font-medium"
-          : "hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)]"
-      )}
-      style={{ paddingLeft: `${level * 16 + 28}px` }}
-      onClick={handleFileClick}
-    >
-      {activeFilePath === node.path && (
-        <motion.div
-          layoutId="activeFileIndicator"
-          className="absolute left-0 top-0 bottom-0 w-[2px] bg-[var(--color-accent-primary)]"
-        />
-      )}
-      <div className="mr-2 z-10 flex items-center justify-center w-4 h-4">
-        {getFileIcon(node.name)}
-      </div>
-      <span className="flex-1 truncate z-10">{node.name}</span>
-    </div>
-  );
+  // Map the C++ calculated hash ID to a specific color index
+  const colorIndex = typeId % FILE_COLORS.length;
+  const assignedColor = FILE_COLORS[colorIndex];
+
+  return <FileCode size={14} style={{ color: assignedColor }} />;
 };
 
+const ITEM_HEIGHT = 24; // Fixed height for each virtualized row
+const OVERSCAN = 10;    // Number of extra rows to render above/below viewport
+
 export const Sidebar: React.FC = () => {
-  const { fileTree } = useStore();
+  const { fileTree, expandedFolders, toggleFolder, openFile, activeFilePath, updateNode } = useStore();
+  
+  // Virtualization State
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
+
+  // Measure container height on mount/resize
+  useEffect(() => {
+    if (containerRef.current) {
+      setContainerHeight(containerRef.current.clientHeight);
+    }
+    const handleResize = () => {
+      if (containerRef.current) {
+        setContainerHeight(containerRef.current.clientHeight);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [fileTree]);
+
+  // Flatten tree for O(1) indexed rendering
+  const flattenedVisibleNodes = React.useMemo(() => {
+    const flat: { node: FileTreeNode; level: number }[] = [];
+    if (!fileTree) return flat;
+    
+    const traverse = (node: FileTreeNode, level: number) => {
+      flat.push({ node, level });
+      if (node.isDirectory && expandedFolders.includes(node.path)) {
+        for (const child of node.children) {
+          traverse(child, level + 1);
+        }
+      }
+    };
+    
+    // Start traversal from root's children, root itself is handled manually
+    for (const child of fileTree.children) {
+      traverse(child, 0);
+    }
+    
+    return flat;
+  }, [fileTree, expandedFolders]);
+
+  const handleNodeClick = async (node: FileTreeNode) => {
+    if (node.isDirectory) {
+      toggleFolder(node.path);
+      // Lazy load from C++ if needed
+      const isExpanded = expandedFolders.includes(node.path);
+      if (!isExpanded && !node.isLoaded) {
+        try {
+          const expandedNode = await window.electronAPI.expandDirectory(node.path);
+          if (expandedNode) updateNode(node.path, expandedNode);
+        } catch (err) {
+          console.error('Failed to expand directory:', err);
+        }
+      }
+    } else {
+      openFile(node.path, node.name);
+      try {
+        const content = await window.electronAPI.readFile(node.path);
+        if (content !== null) {
+          useStore.getState().setActiveFileContent(content);
+        }
+      } catch (err) {
+        console.error('Failed to read file:', err);
+      }
+    }
+  };
+
+  // Virtualization math
+  const totalHeight = flattenedVisibleNodes.length * ITEM_HEIGHT;
+  const startIndex = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - OVERSCAN);
+  const endIndex = Math.min(
+    flattenedVisibleNodes.length - 1,
+    Math.floor((scrollTop + containerHeight) / ITEM_HEIGHT) + OVERSCAN
+  );
+  
+  const visibleItems = flattenedVisibleNodes.slice(startIndex, endIndex + 1);
 
   return (
     <div className="h-full bg-[var(--color-bg-panel)]/80 backdrop-blur-xl text-[var(--color-text-secondary)] flex flex-col select-none border-r border-[var(--color-border-subtle)]">
+      
       {/* Explorer Section with Hover Group */}
       <div className="flex-1 flex flex-col group/explorer-section overflow-hidden">
-        <div className="px-4 py-3 flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--color-text-tertiary)]">
+        
+        {/* Top Header */}
+        <div className="px-4 py-3 flex items-center justify-between text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--color-text-tertiary)] bg-[var(--color-bg-panel)] z-10 relative">
           <span>Explorer</span>
           <div className="flex items-center space-x-0.5 no-drag">
             <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] cursor-pointer text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-all" title="More">
@@ -140,16 +133,21 @@ export const Sidebar: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {/* Scrollable Area */}
+        <div 
+          ref={containerRef}
+          onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
+          className="flex-1 overflow-y-auto custom-scrollbar relative"
+        >
           {fileTree ? (
-            <div>
-              {/* Root folder header (styled as top-level active folder) */}
-              <div className="flex items-center px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-all duration-150 group/root">
+            <div className="pb-4">
+              {/* Root Folder Header */}
+              <div className="flex items-center px-3 sticky top-0 bg-[var(--color-bg-panel)] z-30 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] border-b border-[var(--color-border-subtle)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-all duration-150 group/root h-[32px] shadow-sm">
                 <ChevronDown size={14} className="mr-1 text-[var(--color-text-tertiary)]" />
                 <span className="truncate flex-1">{fileTree.name}</span>
                 
-                {/* Action Icons reveal on explorer section hover */}
-                <div className="flex items-center space-x-1.5 opacity-0 group-hover/explorer-section:opacity-100 transition-opacity duration-200">
+                {/* Action Icons reveal on explorer hover */}
+                <div className="flex items-center space-x-1.5 opacity-0 group-hover/explorer-section:opacity-100 transition-opacity duration-200 bg-[var(--color-bg-panel)] z-40 px-1">
                   <div className="p-1 rounded-md hover:bg-[var(--color-bg-active)] cursor-pointer text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-all" title="New File">
                     <FilePlus2 size={14} />
                   </div>
@@ -164,10 +162,52 @@ export const Sidebar: React.FC = () => {
                   </div>
                 </div>
               </div>
-              {/* Render root's children */}
-              {fileTree.children.map((child) => (
-                <TreeNode key={child.path} node={child} level={0} />
-              ))}
+
+              {/* Virtualized Tree Container */}
+              <div style={{ height: `${totalHeight}px`, position: 'relative', width: '100%' }}>
+                {visibleItems.map((item, index) => {
+                  const { node, level } = item;
+                  const absoluteIndex = startIndex + index;
+                  const isExpanded = node.isDirectory && expandedFolders.includes(node.path);
+                  const isActive = activeFilePath === node.path;
+
+                  return (
+                    <div
+                      key={node.path}
+                      onClick={() => handleNodeClick(node)}
+                      className={cn(
+                        "absolute left-0 right-0 flex items-center cursor-pointer text-[13px] transition-colors duration-150 group z-10",
+                        isActive ? "bg-[var(--color-accent-glow)] text-[var(--color-text-primary)] font-medium" : "hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)]"
+                      )}
+                      style={{ 
+                        top: `${absoluteIndex * ITEM_HEIGHT}px`,
+                        height: `${ITEM_HEIGHT}px`,
+                        paddingLeft: `${level * 16 + (node.isDirectory ? 12 : 28)}px` 
+                      }}
+                    >
+                      {isActive && !node.isDirectory && (
+                        <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[var(--color-accent-primary)] z-20" />
+                      )}
+                      
+                      {node.isDirectory && (
+                        <div className="mr-1 opacity-50 group-hover:opacity-100 transition-opacity">
+                          <ChevronRight 
+                            size={14} 
+                            strokeWidth={2.5} 
+                            className={cn("transition-transform duration-150", isExpanded && "rotate-90")} 
+                          />
+                        </div>
+                      )}
+
+                      <div className="mr-2 flex items-center justify-center w-4 h-4 shrink-0">
+                        {getIconByType(node.typeId, node.isDirectory)}
+                      </div>
+                      
+                      <span className="truncate flex-1 z-10 leading-none mt-[1px]">{node.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full px-6 text-center">
@@ -193,11 +233,11 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-4 py-3 border-t border-[var(--color-border-subtle)] text-[11px] text-[var(--color-text-tertiary)] uppercase font-bold tracking-[0.15em] hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer flex items-center justify-between group text-nowrap">
+      <div className="px-4 py-3 border-t border-[var(--color-border-subtle)] text-[11px] text-[var(--color-text-tertiary)] uppercase font-bold tracking-[0.15em] hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer flex items-center justify-between group text-nowrap shrink-0">
         <span>Outline</span>
         <ChevronRight size={14} strokeWidth={2.5} className="opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
-      <div className="px-4 py-3 border-t border-[var(--color-border-subtle)] text-[11px] text-[var(--color-text-tertiary)] uppercase font-bold tracking-[0.15em] hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer flex items-center justify-between group text-nowrap">
+      <div className="px-4 py-3 border-t border-[var(--color-border-subtle)] text-[11px] text-[var(--color-text-tertiary)] uppercase font-bold tracking-[0.15em] hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer flex items-center justify-between group text-nowrap shrink-0">
         <span>Timeline</span>
         <ChevronRight size={14} strokeWidth={2.5} className="opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
