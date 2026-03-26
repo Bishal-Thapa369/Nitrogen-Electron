@@ -45,6 +45,7 @@ export const Terminal: React.FC = () => {
         cursorBlink: true,
         cursorStyle: 'block',
         allowTransparency: true,
+        scrollback: 20000,
       });
 
       const fitAddon = new FitAddon();
