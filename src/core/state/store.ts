@@ -351,10 +351,9 @@ export const useStore = create<EditorState>((set, get) => ({
   },
 
   deleteNode: async (targetPath) => {
-    const { selectedPaths, fileTree, activeFilePath, openTabs } = get();
-    // Identify targets: either the current selection (if multi-select) or just the targetPath
-    const targets = selectedPaths.length > 1 ? selectedPaths : [targetPath];
-    const count = targets.length;
+    const { selectedPaths } = get();
+    // Use selection count if deleting from a multi-select, otherwise just 1
+    const count = selectedPaths.length > 1 ? selectedPaths.length : 1;
     
     // Safety check for mass delete
     if (count > 200 && !get().confirmBulkOperation?.isOpen) {
@@ -372,43 +371,18 @@ export const useStore = create<EditorState>((set, get) => ({
         });
     }
 
-    // ── OPTIMISTIC UI REMOVAL ── (Instant speed)
-    if (fileTree) {
-      let nextTree = { ...fileTree };
-      for (const pathToDel of targets) {
-        nextTree = removeTreeNode(nextTree, pathToDel) as FileTreeNode;
+    const result = await window.electronAPI.deleteItem(targetPath);
+    if (result.success) {
+      const { fileTree, activeFilePath, openTabs } = get();
+      if (fileTree) {
+        set({ fileTree: removeTreeNode(fileTree, targetPath) });
       }
-      
-      set({ 
-        fileTree: nextTree,
-        selectedPaths: [],
-        selectedPath: null
-      });
-
-      // Optimistically close tabs
-      targets.forEach(path => {
-        if (activeFilePath === path || (activeFilePath && activeFilePath.startsWith(path + '/')) || openTabs.find(t => t.path === path)) {
-          get().closeFile(path);
-        }
-      });
-    }
-
-    // ── BACKGROUND EXECUTION ──
-    try {
-      if (targets.length > 1) {
-        await Promise.all(targets.map(p => window.electronAPI.deleteItem(p)));
-      } else {
-        await window.electronAPI.deleteItem(targetPath);
+      // Close tab if the deleted file was open
+      if (activeFilePath === targetPath || openTabs.find(t => t.path === targetPath)) {
+        get().closeFile(targetPath);
       }
-      
-      // Verification Refresh
-      await get().refreshRoot();
-      return { success: true };
-    } catch (err: any) {
-      console.error('Mass delete background task failed', err);
-      await get().refreshRoot(); // Refresh to restore UI state if some deletes failed
-      return { success: false, error: err?.message || 'Mass delete failed' };
     }
+    return result;
   },
 
   pasteNode: async () => {
