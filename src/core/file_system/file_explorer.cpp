@@ -61,6 +61,54 @@ void FileExplorer::markForDeletion(const std::string& path) {
     m_blacklistedPaths.insert(path);
 }
 
+void FileExplorer::markForDeletionBulk(const std::vector<std::string>& paths) {
+    std::lock_guard<std::mutex> lock(m_blacklistMutex);
+    for (const auto& p : paths) {
+        m_blacklistedPaths.insert(p);
+    }
+}
+
+void FileExplorer::deleteBulkAsync(const std::vector<std::string>& paths, std::function<void(bool)> onComplete) {
+    // 1. Mark for instant-hide (Bulk)
+    markForDeletionBulk(paths);
+
+    // 2. Launch target background thread
+    std::thread([this, paths, onComplete]() {
+        bool allSuccess = true;
+        size_t processedCount = 0;
+
+        for (const auto& path : paths) {
+            try {
+                std::error_code ec;
+                if (fs::exists(path, ec)) {
+                    fs::remove_all(path, ec);
+                    if (ec) allSuccess = false;
+                }
+            } catch (...) {
+                allSuccess = false;
+            }
+
+            processedCount++;
+
+            // Batch-Cleanup: Optional: every 100 files, we could remove from blacklist
+            // to show progress, but since we are doing 1 UI refresh, we keep them blacklisted
+            // until the end of the whole block for safety.
+        }
+
+        // 3. Final Cleanup: Remove all from blacklist
+        {
+            std::lock_guard<std::mutex> lock(m_blacklistMutex);
+            for (const auto& p : paths) {
+                m_blacklistedPaths.erase(p);
+            }
+        }
+
+        if (onComplete) {
+            onComplete(allSuccess);
+        }
+    }).detach();
+}
+
 void FileExplorer::deleteItemAsync(const std::string& path, std::function<void(bool)> onComplete) {
     // 1. Mark for instant-hide
     markForDeletion(path);

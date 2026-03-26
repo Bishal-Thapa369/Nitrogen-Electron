@@ -16,6 +16,7 @@ interface Window {
     // File Operations
     renameItem: (oldPath: string, newName: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
     deleteItem: (targetPath: string) => Promise<{ success: boolean; error?: string }>;
+    deleteItemsBulk: (targetPaths: string[]) => Promise<{ success: boolean; error?: string }>;
     createFile: (parentDir: string, fileName: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
     createFolder: (parentDir: string, folderName: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
     revealItem: (targetPath: string) => Promise<{ success: boolean; error?: string }>;

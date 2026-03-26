@@ -52,6 +52,25 @@ export function registerFileOperations(fileExplorer) {
     }
   });
 
+  // ── Delete Bulk (Native C++ Vector Deletion) ─────────────
+  ipcMain.handle('fs-delete-bulk', async (_event, targetPaths) => {
+    try {
+      if (fileExplorer && fileExplorer.deleteItemsBulk) {
+        fileExplorer.deleteItemsBulk(targetPaths);
+        return { success: true };
+      }
+      
+      // Bulk fallback: loop with trashItem (this is what caused the OOM before,
+      // but only as a last resort if C++ is not loaded for some reason)
+      for (const p of targetPaths) {
+        await shell.trashItem(p);
+      }
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  });
+
   // ── Create File ───────────────────────────────────────────
   ipcMain.handle('fs-create-file', async (_event, parentDir, fileName) => {
     try {

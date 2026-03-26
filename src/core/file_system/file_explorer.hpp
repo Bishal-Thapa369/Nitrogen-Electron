@@ -72,6 +72,19 @@ public:
     void markForDeletion(const std::string& path);
 
     /**
+     * @brief Mark multiple paths as "being deleted" atomically.
+     * @param paths List of absolute paths to hide.
+     */
+    void markForDeletionBulk(const std::vector<std::string>& paths);
+
+    /**
+     * @brief Physically delete multiple files or directories from the disk in a single background thread.
+     * @param paths List of absolute paths to delete.
+     * @param onComplete Optional callback when ALL deletions finish.
+     */
+    void deleteBulkAsync(const std::vector<std::string>& paths, std::function<void(bool)> onComplete = nullptr);
+
+    /**
      * @brief Physically delete a file or directory from the disk in a background thread.
      * @param path Absolute path to delete.
      * @param onComplete Optional callback when the deletion finishes.

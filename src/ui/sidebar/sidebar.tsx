@@ -122,8 +122,7 @@ export const Sidebar: React.FC = () => {
           state.selectedPaths.forEach(p => state.duplicateNode(p));
         }
       } else if (e.key === 'Delete' && state.selectedPaths.length > 0) {
-        // Now calling deleteNode directly without confirmation barrier
-        state.selectedPaths.forEach(p => state.deleteNode(p));
+        state.deleteNodesBulk(state.selectedPaths);
       }
     };
     window.addEventListener('keydown', handleGlobalKeyDown);

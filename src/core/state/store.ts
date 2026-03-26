@@ -58,6 +58,7 @@ interface EditorState {
   // File Operations
   renameNode: (oldPath: string, newName: string) => Promise<{ success: boolean; error?: string }>;
   deleteNode: (targetPath: string) => Promise<{ success: boolean; error?: string }>;
+  deleteNodesBulk: (paths: string[]) => Promise<{ success: boolean; error?: string }>;
   createFile: (parentDir: string, fileName: string) => Promise<{ success: boolean; error?: string }>;
   createFolder: (parentDir: string, folderName: string) => Promise<{ success: boolean; error?: string }>;
   refreshRoot: () => Promise<void>;
@@ -342,18 +343,24 @@ export const useStore = create<EditorState>((set, get) => ({
   },
 
   deleteNode: async (targetPath) => {
-    const result = await window.electronAPI.deleteItem(targetPath);
+    return get().deleteNodesBulk([targetPath]);
+  },
+
+  deleteNodesBulk: async (paths) => {
+    if (!paths || paths.length === 0) return { success: true };
+
+    const result = await window.electronAPI.deleteItemsBulk(paths);
     if (result.success) {
-      // We immediately refresh. Native C++ will now "forget" these files
-      // instantly thanks to its internal blacklist, making it feel O(1) fast
-      // while the physical deletion happens in the background.
+      // One single refresh for the entire bulk operation
+      // Native C++ will have blacklisted all paths already
       await get().refreshRoot();
 
       const { activeFilePath, openTabs } = get();
-      // Close tab if the deleted file was open
-      if (activeFilePath === targetPath || openTabs.find(t => t.path === targetPath)) {
-        get().closeFile(targetPath);
-      }
+      paths.forEach(p => {
+        if (activeFilePath === p || openTabs.find(t => t.path === p)) {
+            get().closeFile(p);
+        }
+      });
     }
     return result;
   },

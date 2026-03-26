@@ -173,6 +173,36 @@ Napi::Value DeleteItemAsync(const Napi::CallbackInfo& info) {
     return Napi::Boolean::New(env, true);
 }
 
+// deleteItemsBulk(targetPaths: string[]): boolean
+Napi::Value DeleteItemsBulk(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    if (!g_explorer) {
+        Napi::Error::New(env, "No directory is open.").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+    if (info.Length() < 1 || !info[0].IsArray()) {
+        Napi::TypeError::New(env, "Expected array argument: targetPaths").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+
+    Napi::Array pathsArray = info[0].As<Napi::Array>();
+    std::vector<std::string> paths;
+    paths.reserve(pathsArray.Length());
+
+    for (uint32_t i = 0; i < pathsArray.Length(); ++i) {
+        Napi::Value val = pathsArray[i];
+        if (val.IsString()) {
+            paths.push_back(val.As<Napi::String>().Utf8Value());
+        }
+    }
+    
+    // Trigger bulk atomic hide and background deletion
+    g_explorer->deleteBulkAsync(paths);
+
+    return Napi::Boolean::New(env, true);
+}
+
 // ---------------------------------------------------------------------------
 // Module Registration
 // ---------------------------------------------------------------------------
@@ -184,6 +214,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
     exports.Set("getTree", Napi::Function::New(env, GetTree));
     exports.Set("getExtensions", Napi::Function::New(env, GetExtensions));
     exports.Set("deleteItemAsync", Napi::Function::New(env, DeleteItemAsync));
+    exports.Set("deleteItemsBulk", Napi::Function::New(env, DeleteItemsBulk));
     return exports;
 }
 
