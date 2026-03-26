@@ -215,6 +215,12 @@ export function registerFileOperations(fileExplorer) {
           // Cross-device move fallback
           await fs.cp(sourcePath, destPath, { recursive: true });
           await shell.trashItem(sourcePath);
+          
+          // Clean Move: Unmark the source path so it's not hidden in the root 
+          // if we ever move/copy it back.
+          if (fileExplorer.unmarkForDeletionBulk) {
+            fileExplorer.unmarkForDeletionBulk([sourcePath]);
+          }
         } else {
           throw renameErr;
         }
