@@ -24,4 +24,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   copyPath: (targetPath) => ipcRenderer.invoke('fs-copy-path', targetPath),
   copyItem: (sourcePath, destDir) => ipcRenderer.invoke('fs-copy', sourcePath, destDir),
   moveItem: (sourcePath, destDir) => ipcRenderer.invoke('fs-move', sourcePath, destDir),
+
+  // Terminal (High-Performance C++ Backend)
+  terminalSpawn: (rows, cols) => ipcRenderer.invoke('terminal:spawn', rows, cols),
+  terminalWrite: (data) => ipcRenderer.send('terminal:write', data),
+  terminalResize: (rows, cols) => ipcRenderer.send('terminal:resize', rows, cols),
+  onTerminalData: (callback) => ipcRenderer.on('terminal:data', (_event, data) => callback(data)),
 });
+

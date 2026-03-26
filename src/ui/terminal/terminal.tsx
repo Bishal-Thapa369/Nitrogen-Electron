@@ -11,7 +11,7 @@ export const Terminal: React.FC = () => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const inputBuffer = useRef('');
+
 
   useEffect(() => {
     if (!isTerminalOpen || !terminalRef.current) return;
@@ -56,33 +56,27 @@ export const Terminal: React.FC = () => {
       xtermRef.current = term;
       fitAddonRef.current = fitAddon;
 
-      term.writeln('\x1b[1;36mWelcome to CodeWeaver Terminal v1.0.0\x1b[0m');
-      term.writeln('Type "help" for a list of commands.');
-      term.writeln('');
-      prompt(term);
+      // Initialize Native Terminal Session
+      const initTerminal = async () => {
+        const { rows, cols } = term;
+        await window.electronAPI.terminalSpawn(rows, cols);
+        
+        window.electronAPI.onTerminalData((data: string) => {
+          term.write(data);
+        });
+      };
 
-      term.onData(e => {
-        switch (e) {
-          case '\r': // Enter
-            term.writeln('');
-            handleCommand(inputBuffer.current, term);
-            inputBuffer.current = '';
-            prompt(term);
-            break;
-          case '\u007F': // Backspace (DEL)
-            if (inputBuffer.current.length > 0) {
-              term.write('\b \b');
-              inputBuffer.current = inputBuffer.current.substr(0, inputBuffer.current.length - 1);
-            }
-            break;
-          default: // Print all other characters
-            if (e >= String.fromCharCode(0x20) && e <= String.fromCharCode(0x7E) || e >= '\u00a0') {
-              inputBuffer.current += e;
-              term.write(e);
-            }
-        }
+      initTerminal();
+
+      term.onData(data => {
+        window.electronAPI.terminalWrite(data);
+      });
+
+      term.onResize(({ cols, rows }) => {
+        window.electronAPI.terminalResize(rows, cols);
       });
     } else {
+
       // Refit on open
       setTimeout(() => {
         fitAddonRef.current?.fit();
@@ -123,44 +117,8 @@ export const Terminal: React.FC = () => {
     }
   }, [theme]);
 
-  const prompt = (term: XTerm) => {
-    term.write('\x1b[1;35muser@codeweaver\x1b[0m:\x1b[1;34m~\x1b[0m$ ');
-  };
+  // Mock functions removed for real backend integration
 
-  const handleCommand = (cmd: string, term: XTerm) => {
-    const trimmedCmd = cmd.trim().toLowerCase();
-    if (!trimmedCmd) return;
-
-    switch (trimmedCmd) {
-      case 'help':
-        term.writeln('Available commands:');
-        term.writeln('  \x1b[32mhelp\x1b[0m    - Show this help message');
-        term.writeln('  \x1b[32mclear\x1b[0m   - Clear the terminal screen');
-        term.writeln('  \x1b[32mdate\x1b[0m    - Show current date and time');
-        term.writeln('  \x1b[32mls\x1b[0m      - List directory contents');
-        term.writeln('  \x1b[32mwhoami\x1b[0m  - Print current user');
-        term.writeln('  \x1b[32mecho\x1b[0m    - Print text to terminal');
-        break;
-      case 'clear':
-        term.clear();
-        break;
-      case 'date':
-        term.writeln(new Date().toString());
-        break;
-      case 'ls':
-        term.writeln('\x1b[1;34msrc\x1b[0m  \x1b[1;34mpublic\x1b[0m  package.json  README.md  vite.config.ts');
-        break;
-      case 'whoami':
-        term.writeln('codeweaver-user');
-        break;
-      default:
-        if (trimmedCmd.startsWith('echo ')) {
-          term.writeln(cmd.slice(5));
-        } else {
-          term.writeln(`\x1b[31mCommand not found: ${trimmedCmd}\x1b[0m`);
-        }
-    }
-  };
 
   const clearTerminal = () => {
     if (xtermRef.current) {

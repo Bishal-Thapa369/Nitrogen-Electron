@@ -22,5 +22,13 @@ interface Window {
     copyPath: (targetPath: string) => Promise<{ success: boolean; error?: string }>;
     copyItem: (sourcePath: string, destDir: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
     moveItem: (sourcePath: string, destDir: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
+
+    // Terminal (High-Performance C++ Backend)
+    terminalSpawn: (rows: number, cols: number) => Promise<number>;
+    terminalWrite: (data: string) => void;
+    terminalResize: (rows: number, cols: number) => void;
+    terminalKill: (id: number) => void;
+    onTerminalData: (callback: (data: string) => void) => void;
   };
 }
+

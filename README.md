@@ -10,19 +10,18 @@ Nitrogen isn't an "Electron app" in the traditional sense. It follows a strict *
 - **Logic Layer (The Brain):** C++ manages all heavy-duty tasks—File System scanning, Piece-Table text buffers, and eventually, syntax parsing (Tree-sitter).
 - **Display Layer (The Shell):** React and Tailwind 4.0 handle the rendering, animations, and aesthetic interactions, ensuring 1:1 visual parity with modern design standards.
 
-## ✨ Key Features (Phase 1: Native Explorer Completed)
-
+- **High-Performance Native Terminal:** Integrated terminal powered by `libvterm` and Linux `forkpty`. Features a dedicated background I/O thread, full Unicode support (Nepali, Japanese, Emojis), and a premium neon-inspired color palette.
+- **Dual-Module Build Architecture:** Independent native compilation targets (`nitrogen_file_explorer.node` and `nitrogen_terminal.node`) to ensure architectural isolation and protection of finalized core modules.
 - **High-Performance Virtualization:** Custom O(1) virtualized tree engine supporting 100k+ files with cinematic motion blur and 144Hz scroll-fluidity.
 - **Native C++ File Explorer:** Recursive directory scanning using `std::filesystem` with depth-limited lazy-loading.
 - **Advanced Multi-Selection**: Full support for `Shift-Click` range selection and `Ctrl+Click` selective arrays for bulk operations.
 - **Global Keyboard Shortcuts**: Standard IDE shortcuts (`Ctrl+C`, `Ctrl+X`, `Ctrl+V`, `Ctrl+D`, `Delete`) mapped to the explorer for seamless keyboard-only workflows.
-- **Deep Reconstitution Engine**: A recursive, cache-bypassing sync engine that obliterates "ghost files" and ensures 100% data integrity with external file managers (Dolphin, etc.).
-- **Native Clipboard Operations:** Integrated Move, Copy, Paste, and Duplicate engine with intelligent collision resolution (`-copy`, `-copy2`, etc.) and visual cut-opacity tracking.
-- **Piece-Table Text Buffer:** $O(1)$ performance for text insertions, deletions, and undo/redo operations (Phase 2 core focus).
+- **Piece-Table Text Buffer:** $O(1)$ performance for text insertions, deletions, and undo/redo operations (Phase 3 core focus).
 - **CodeWeaver Aesthetics:** A premium, glassmorphic UI designed for deep focus and visual excellence.
 
-### 🏁 Phase 1: Mission Complete
-The File Explorer is now a robust, solved pillar. It provides a native-grade foundation with O(1) rendering, recursive C++ scanning, and professional-grade multi-selection/clipboard logic. With this pillar finalized and archived, the project is now 100% focused on Phase 2: High-Performance Editor and Terminal.
+### 🏁 Phase 2: Terminal Mission Complete
+The Native Terminal is now a fully integrated power pillar. It provides a real shell experience with zero-lag PTY communication and robust international character support. With the terminal finalized, we are now aggressively moving into **Phase 3: High-Performance Editor & Piece Table Integration**.
+
 
 ## 🛠️ Technology Stack
 
@@ -68,7 +67,8 @@ Nitrogen follows a strict architectural protocol documented in the `RULES/` dire
 ---
 
 ### 📅 Current Milestone
-**Milestone 28: Phase 1 (Native Explorer) Official Completion** — We have finalized the Hybrid Native File Explorer with Multi-Selection, Keyboard Shortcuts, and Deep Sync logic. This known-good state is archived on the **`v2`** branch. Currently transitioning to Phase 2: Pieces Table N-API Bridge and Terminal integration.
+**Milestone 32: Phase 2 (Native Terminal) Completion** — We have successfully integrated the high-performance C++ `libvterm` engine with a multi-threaded PTY bridge. The terminal is fully internationalized and optimized for zero-lag responsiveness. Now transitioning to **Phase 3: High-Performance Piece Table Editor Integration**.
+
 
 ---
 Created by [Bishal Thapa](https://github.com/Bishal-Thapa369)

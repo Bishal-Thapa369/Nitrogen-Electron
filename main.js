@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 // Load the C++ native addon
 const require = createRequire(import.meta.url);
 const fileExplorer = require('./build/Release/nitrogen_file_explorer.node');
+const terminalNative = require('./build/Release/nitrogen_terminal.node');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -39,7 +40,31 @@ function createWindow() {
   });
   ipcMain.on('window-close', () => win.close());
 
+  // ---- Terminal IPC ----
+  let terminalSessionId = -1;
+
+  ipcMain.handle('terminal:spawn', (_event, rows, cols) => {
+    const shell = process.env.SHELL || '/bin/bash';
+    terminalSessionId = terminalNative.spawn(rows, cols, shell, (data) => {
+      win.webContents.send('terminal:data', data);
+    });
+    return terminalSessionId;
+  });
+
+  ipcMain.on('terminal:write', (_event, data) => {
+    if (terminalSessionId !== -1) {
+      terminalNative.write(terminalSessionId, data);
+    }
+  });
+
+  ipcMain.on('terminal:resize', (_event, rows, cols) => {
+    if (terminalSessionId !== -1) {
+      terminalNative.resize(terminalSessionId, rows, cols);
+    }
+  });
+
   // ---- File Explorer IPC ----
+
 
   // Open Folder Dialog → returns the C++ tree or null
   ipcMain.handle('open-folder-dialog', async () => {
