@@ -29,7 +29,22 @@
 - `src/ui/app.tsx` - Main React entry point for the editor UI.
 - `src/ui/main.tsx` - Bootstrapper for the React application.
 - `src/ui/styles/index.css` - Global styling including Tailwind 4 themes and custom glassmorphism.
-- `src/ui/sidebar/sidebar.tsx` - Sidebar component for recursive native file explorer.
+- `src/ui/sidebar/sidebar.tsx` - The 60-line structural orchestrator (Shell) for the recursive file explorer.
+- `src/ui/sidebar/components/` - Atomic Visual Skins (Pure `tsx` components).
+    - `file_row.tsx`: Single file item rendering (memoized).
+    - `sidebar_header.tsx`: "Explorer" title and options.
+    - `sticky_root.tsx`: Sticky root header with 4 action icons.
+    - `new_input_row.tsx`: Dynamic absolute-positioned creation input row.
+    - `empty_sidebar.tsx`: "No folder opened" view.
+    - `sidebar_footer.tsx`: Outline and Timeline section footers.
+- `src/ui/sidebar/hooks/` - Specialized Logic Subsystems.
+    - `use_sidebar_virtualization.ts`: Scroll math and row-slicing logic.
+    - `use_sidebar_creation.ts`: File/Folder creation state management.
+    - `use_sidebar_navigation.ts`: Multi-selection and tree traversal logic.
+    - `use_sidebar_shortcuts.ts`: Global keyboard event listeners (Ctrl+V, Delete, etc.).
+- `src/ui/sidebar/logic/` - The Orchestrator Hub.
+    - `use_sidebar_logic.ts`: Connects all sub-hooks to the main Sidebar shell.
+- `src/ui/sidebar/utils/` - Style helpers and icon mapping algorithms.
 - `src/ui/sidebar/context_menu/context_menu.tsx` - Right-click context menu (Rename, Delete, Cut, Copy, Paste, Duplicate).
 - `src/ui/editor/editor.tsx` - Monaco-based core editor rendering surface.
 - `src/ui/tabs/tabs.tsx` - Tab management UI.
