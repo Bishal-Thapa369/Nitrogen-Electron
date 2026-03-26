@@ -4,6 +4,7 @@ import { FileCode, Folder, ChevronRight, ChevronDown, FolderOpen, MoreHorizontal
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { ContextMenu } from './context_menu/context_menu';
+import { BulkConfirmModal } from './bulk_confirm_modal';
 
 
 function cn(...inputs: ClassValue[]) {
@@ -114,6 +115,9 @@ export const Sidebar: React.FC = () => {
           state.setClipboardItems(state.selectedPaths, 'cut');
         } else if (e.key === 'v') {
           state.pasteNode();
+        } else if (e.key === 'a') {
+          e.preventDefault();
+          state.selectAll();
         } else if (e.key === 'd' && state.selectedPaths.length > 0) {
           e.preventDefault();
           state.selectedPaths.forEach(p => state.duplicateNode(p));
@@ -517,6 +521,8 @@ export const Sidebar: React.FC = () => {
           onCreate={(type) => startCreation(type)}
         />
       )}
+
+      <BulkConfirmModal />
 
     </div>
   );

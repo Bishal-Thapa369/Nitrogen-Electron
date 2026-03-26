@@ -50,6 +50,7 @@ interface EditorState {
   selectedPaths: string[];
   setSelectedPath: (path: string | null, multi?: boolean) => void;
   setSelectedPaths: (paths: string[]) => void;
+  selectAll: (targetPath?: string) => void;
   collapseAll: () => void;
   clipboardItems: { paths: string[]; type: 'copy' | 'cut' } | null;
   setClipboardItems: (paths: string[], type: 'copy' | 'cut') => void;
@@ -62,6 +63,13 @@ interface EditorState {
   refreshRoot: () => Promise<void>;
   pasteNode: () => Promise<{ success: boolean; error?: string } | null>;
   duplicateNode: (path: string) => Promise<{ success: boolean; error?: string }>;
+  confirmBulkOperation: { 
+    isOpen: boolean; 
+    itemCount: number; 
+    operation: 'paste' | 'delete'; 
+    onProceed: () => void 
+  } | null;
+  setConfirmBulk: (data: EditorState['confirmBulkOperation']) => void;
 }
 
 // Intelligently merge C++ shallow refreshed nodes with old deeply loaded sub-nodes
@@ -134,6 +142,8 @@ export const useStore = create<EditorState>((set, get) => ({
   isSidebarOpen: true,
   cursorPosition: { line: 1, column: 1 },
   autoSave: true,
+  confirmBulkOperation: null,
+  setConfirmBulk: (data) => set({ confirmBulkOperation: data }),
 
   setFileTree: (tree, rootPath) => {
     set({ fileTree: tree, rootPath, expandedFolders: tree ? [tree.path] : [] });
@@ -204,6 +214,57 @@ export const useStore = create<EditorState>((set, get) => ({
     selectedPaths: multi ? state.selectedPaths : (path ? [path] : []) 
   })),
   setSelectedPaths: (paths) => set({ selectedPaths: paths }),
+
+  selectAll: (forcedPath) => {
+    const state = get();
+    const { fileTree, selectedPath, rootPath } = state;
+    if (!fileTree || !rootPath) return;
+
+    // 1. Identify Target Directory
+    let targetDir = forcedPath || rootPath;
+    
+    // If no specific path is forced, use the selection context
+    if (!forcedPath && selectedPath) {
+      const findNode = (path: string, node: FileTreeNode | null = fileTree): FileTreeNode | null => {
+        if (!node) return null;
+        if (node.path === path) return node;
+        for (const child of node.children) {
+          if (child.path === path) return child;
+          if (child.isDirectory && path.startsWith(child.path + '/')) {
+            const found = findNode(path, child);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const selNode = findNode(selectedPath);
+      if (selNode) {
+        targetDir = selNode.isDirectory ? selNode.path : getParentPath(selNode.path);
+      }
+    }
+
+    // 2. Fetch Children of that Target
+    const findNodeByPath = (path: string, node: FileTreeNode | null = fileTree): FileTreeNode | null => {
+        if (!node) return null;
+        if (node.path === path) return node;
+        for (const child of node.children) {
+          if (child.path === path) return child;
+          if (child.isDirectory && path.startsWith(child.path + '/')) {
+            const found = findNodeByPath(path, child);
+            if (found) return found;
+          }
+        }
+        return null;
+    };
+
+    const targetNode = findNodeByPath(targetDir);
+    if (targetNode && targetNode.isDirectory) {
+      const allChildPaths = targetNode.children.map(c => c.path);
+      set({ selectedPaths: allChildPaths });
+    }
+  },
+
   clipboardItems: null,
   setClipboardItems: (paths, type) => set({ clipboardItems: { paths, type } }),
   collapseAll: () => {
@@ -290,6 +351,26 @@ export const useStore = create<EditorState>((set, get) => ({
   },
 
   deleteNode: async (targetPath) => {
+    const { selectedPaths } = get();
+    // Use selection count if deleting from a multi-select, otherwise just 1
+    const count = selectedPaths.length > 1 ? selectedPaths.length : 1;
+    
+    // Safety check for mass delete
+    if (count > 200 && !get().confirmBulkOperation?.isOpen) {
+        return new Promise((resolve) => {
+            get().setConfirmBulk({
+                isOpen: true,
+                itemCount: count,
+                operation: 'delete',
+                onProceed: async () => {
+                   const res = await get().deleteNode(targetPath);
+                   get().setConfirmBulk(null);
+                   resolve(res);
+                }
+            });
+        });
+    }
+
     const result = await window.electronAPI.deleteItem(targetPath);
     if (result.success) {
       const { fileTree, activeFilePath, openTabs } = get();
@@ -307,6 +388,22 @@ export const useStore = create<EditorState>((set, get) => ({
   pasteNode: async () => {
     const { clipboardItems, selectedPath, rootPath, fileTree } = get();
     if (!clipboardItems || !fileTree || clipboardItems.paths.length === 0) return null;
+
+    // Safety check for mass paste
+    if (clipboardItems.paths.length > 200 && !get().confirmBulkOperation?.isOpen) {
+        return new Promise((resolve) => {
+            get().setConfirmBulk({
+                isOpen: true,
+                itemCount: clipboardItems.paths.length,
+                operation: 'paste',
+                onProceed: async () => {
+                   const res = await get().pasteNode();
+                   get().setConfirmBulk(null);
+                   resolve(res);
+                }
+            });
+        });
+    }
 
     let destDir = rootPath || '/';
 
