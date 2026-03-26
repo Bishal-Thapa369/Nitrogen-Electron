@@ -74,15 +74,13 @@ export function registerFileOperations(fileExplorer) {
             const batch = targetPaths.slice(i, i + batchSize);
             await Promise.all(batch.map(p => shell.trashItem(p).catch(() => {})));
             
-            // Allow the OS disk heads and UI thread to breathe
+            // 3. Wave-Clearing: Unmark this batch as soon as it's trashed 
+            if (fileExplorer.unmarkForDeletionBulk) {
+                fileExplorer.unmarkForDeletionBulk(batch);
+            }
+            
+            // Allow OS and UI to breathe
             await new Promise(resolve => setTimeout(resolve, 50));
-          }
-
-          // 3. Final atomic unmark (All done!)
-          // Restore visibility for ALL original paths in one go 
-          // (Only essential if files were restored or recreated at same path)
-          if (fileExplorer.unmarkForDeletionBulk) {
-             fileExplorer.unmarkForDeletionBulk(targetPaths);
           }
         })();
 

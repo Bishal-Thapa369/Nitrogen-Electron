@@ -23,6 +23,8 @@ interface Window {
     copyPath: (targetPath: string) => Promise<{ success: boolean; error?: string }>;
     copyItem: (sourcePath: string, destDir: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
     moveItem: (sourcePath: string, destDir: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
+    unmarkForDeletionBulk: (targetPaths: string[]) => Promise<boolean>;
+    clearDeletionBlacklist: () => Promise<boolean>;
 
     // Terminal (High-Performance C++ Backend)
     terminalSpawn: (rows: number, cols: number) => Promise<number>;

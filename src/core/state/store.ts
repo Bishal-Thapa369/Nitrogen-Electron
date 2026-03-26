@@ -270,6 +270,11 @@ export const useStore = create<EditorState>((set, get) => ({
     const result = await window.electronAPI.renameItem(oldPath, newName);
     if (result.success) {
       const parentDir = getParentPath(oldPath);
+      const newPath = parentDir + (parentDir.endsWith('/') ? '' : '/') + newName;
+      
+      // Creation Priority: Unmark new path just in case it was part of a recent deletion 
+      await window.electronAPI.unmarkForDeletionBulk([newPath]);
+
       const refreshed = await window.electronAPI.refreshDirectory(parentDir);
       if (refreshed) await get().updateNode(parentDir, refreshed);
     }
@@ -279,6 +284,10 @@ export const useStore = create<EditorState>((set, get) => ({
   createFile: async (parentDir, fileName) => {
     const result = await window.electronAPI.createFile(parentDir, fileName);
     if (result.success) {
+      const newPath = parentDir + (parentDir.endsWith('/') ? '' : '/') + fileName;
+      // Creation Priority: Ensure the newly created file isn't hiding in the blacklist
+      await window.electronAPI.unmarkForDeletionBulk([newPath]);
+
       const refreshed = await window.electronAPI.refreshDirectory(parentDir);
       if (refreshed) await get().updateNode(parentDir, refreshed);
     }
@@ -288,6 +297,10 @@ export const useStore = create<EditorState>((set, get) => ({
   createFolder: async (parentDir, folderName) => {
     const result = await window.electronAPI.createFolder(parentDir, folderName);
     if (result.success) {
+      const newPath = parentDir + (parentDir.endsWith('/') ? '' : '/') + folderName;
+      // Creation Priority: Ensure the newly created folder is visible
+      await window.electronAPI.unmarkForDeletionBulk([newPath]);
+
       // Make sure the parent is expanded so the new folder is visible
       const { expandedFolders } = get();
       if (!expandedFolders.includes(parentDir)) {
@@ -418,6 +431,14 @@ export const useStore = create<EditorState>((set, get) => ({
     }
 
     if (anySuccess) {
+      // Clean Deletion Rule: Explicitly unmark all destination paths 
+      // so they can be seen even if background deletion is still running.
+      const destPaths = sourcePaths.map(sp => {
+          const name = sp.split('/').pop() || '';
+          return destDir + (destDir.endsWith('/') ? '' : '/') + name;
+      });
+      await window.electronAPI.unmarkForDeletionBulk(destPaths);
+
       const refreshedDest = await window.electronAPI.refreshDirectory(destDir);
       
       set((state) => {
