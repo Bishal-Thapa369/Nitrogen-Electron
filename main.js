@@ -123,7 +123,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  registerFileOperations();
+  registerFileOperations(fileExplorer);
   createWindow();
 });
 

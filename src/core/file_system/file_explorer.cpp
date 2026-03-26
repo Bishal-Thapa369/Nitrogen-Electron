@@ -1,6 +1,10 @@
 #include "file_explorer.hpp"
 #include <filesystem>
 #include <stdexcept>
+#include <thread>
+#include <mutex>
+#include <functional>
+#include <unordered_map>
 
 namespace fs = std::filesystem;
 
@@ -50,6 +54,42 @@ void FileExplorer::refreshDirectory(const std::string& dirPath) {
     node->isLoaded = false;
     scanDirectory(node, 0, 1);
     node->isLoaded = true;
+}
+
+void FileExplorer::markForDeletion(const std::string& path) {
+    std::lock_guard<std::mutex> lock(m_blacklistMutex);
+    m_blacklistedPaths.insert(path);
+}
+
+void FileExplorer::deleteItemAsync(const std::string& path, std::function<void(bool)> onComplete) {
+    // 1. Mark for instant-hide
+    markForDeletion(path);
+
+    // 2. Launch background thread for physical disk removal
+    std::thread([this, path, onComplete]() {
+        bool success = false;
+        try {
+            std::error_code ec;
+            if (fs::exists(path, ec)) {
+                fs::remove_all(path, ec);
+                success = !ec;
+            } else {
+                success = true; // Already gone
+            }
+        } catch (...) {
+            success = false;
+        }
+
+        // 3. Cleanup: Remove from blacklist after disk operation is finished
+        {
+            std::lock_guard<std::mutex> lock(m_blacklistMutex);
+            m_blacklistedPaths.erase(path);
+        }
+
+        if (onComplete) {
+            onComplete(success);
+        }
+    }).detach(); // Detach so the explorer doesn't need to join the thread
 }
 
 // ---------------------------------------------------------------------------
@@ -104,6 +144,16 @@ void FileExplorer::scanDirectory(FileNode* node, int currentDepth, int maxDepth)
     for (const auto& entry : it) {
         std::error_code entryEc;
         const auto& entryPath = entry.path();
+        const std::string pathStr = entryPath.string();
+
+        // --- FILTER: Skip blacklisted paths ---
+        {
+            std::lock_guard<std::mutex> lock(m_blacklistMutex);
+            if (m_blacklistedPaths.find(pathStr) != m_blacklistedPaths.end()) {
+                continue;
+            }
+        }
+
         const bool isDir = entry.is_directory(entryEc);
         if (entryEc) continue; // Skip entries we can't stat
 

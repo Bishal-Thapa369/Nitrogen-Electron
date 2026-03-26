@@ -4,6 +4,8 @@
 #include <string>
 #include <functional>
 #include <unordered_map>
+#include <unordered_set>
+#include <mutex>
 
 namespace nitrogen::core {
 
@@ -64,6 +66,19 @@ public:
     const FileNode* findNode(const std::string& path) const;
 
     /**
+     * @brief Mark a path as "being deleted" so it's instantly hidden from scans.
+     * @param path Absolute path to hide.
+     */
+    void markForDeletion(const std::string& path);
+
+    /**
+     * @brief Physically delete a file or directory from the disk in a background thread.
+     * @param path Absolute path to delete.
+     * @param onComplete Optional callback when the deletion finishes.
+     */
+    void deleteItemAsync(const std::string& path, std::function<void(bool)> onComplete = nullptr);
+
+    /**
      * @brief Get the dynamic extension mapping generated during scan.
      * @return Const reference to the extension map (string -> id).
      */
@@ -71,6 +86,9 @@ public:
 
 private:
     std::unique_ptr<FileNode> m_root;
+    
+    std::unordered_set<std::string> m_blacklistedPaths;
+    mutable std::mutex m_blacklistMutex;
 
     std::unordered_map<std::string, uint16_t> m_extensionMap;
     uint16_t m_nextExtensionId = 2; // 0 = unknown, 1 = folder

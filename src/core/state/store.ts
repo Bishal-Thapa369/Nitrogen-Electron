@@ -373,10 +373,12 @@ export const useStore = create<EditorState>((set, get) => ({
 
     const result = await window.electronAPI.deleteItem(targetPath);
     if (result.success) {
-      const { fileTree, activeFilePath, openTabs } = get();
-      if (fileTree) {
-        set({ fileTree: removeTreeNode(fileTree, targetPath) });
-      }
+      // We immediately refresh. Native C++ will now "forget" these files
+      // instantly thanks to its internal blacklist, making it feel O(1) fast
+      // while the physical deletion happens in the background.
+      await get().refreshRoot();
+
+      const { activeFilePath, openTabs } = get();
       // Close tab if the deleted file was open
       if (activeFilePath === targetPath || openTabs.find(t => t.path === targetPath)) {
         get().closeFile(targetPath);

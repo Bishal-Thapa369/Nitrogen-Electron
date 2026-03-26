@@ -151,6 +151,28 @@ Napi::Value GetExtensions(const Napi::CallbackInfo& info) {
     return obj;
 }
 
+// deleteItem(targetPath: string): boolean
+Napi::Value DeleteItemAsync(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    if (!g_explorer) {
+        Napi::Error::New(env, "No directory is open.").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+    if (info.Length() < 1 || !info[0].IsString()) {
+        Napi::TypeError::New(env, "Expected string argument: targetPath").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+
+    std::string targetPath = info[0].As<Napi::String>().Utf8Value();
+    
+    // We don't bother with a JS callback here yet; 
+    // the UI will refresh manually or after this returns.
+    g_explorer->deleteItemAsync(targetPath);
+
+    return Napi::Boolean::New(env, true);
+}
+
 // ---------------------------------------------------------------------------
 // Module Registration
 // ---------------------------------------------------------------------------
@@ -161,6 +183,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
     exports.Set("refreshDirectory", Napi::Function::New(env, RefreshDirectory));
     exports.Set("getTree", Napi::Function::New(env, GetTree));
     exports.Set("getExtensions", Napi::Function::New(env, GetExtensions));
+    exports.Set("deleteItemAsync", Napi::Function::New(env, DeleteItemAsync));
     return exports;
 }
 

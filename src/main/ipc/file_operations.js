@@ -10,10 +10,10 @@ import fs from 'fs/promises';
 import path from 'path';
 
 /**
- * Register all file-operation IPC handlers on the given ipcMain instance.
+ * Registered all file-operation IPC handlers on the given ipcMain instance.
  * Called once from main.js during startup.
  */
-export function registerFileOperations() {
+export function registerFileOperations(fileExplorer) {
 
   // ── Rename ───────────────────────────────────────────────
   ipcMain.handle('fs-rename', async (_event, oldPath, newName) => {
@@ -36,9 +36,15 @@ export function registerFileOperations() {
     }
   });
 
-  // ── Delete (sends to Recycle Bin / Trash) ─────────────────
+  // ── Delete (Native C++ Background Deletion) ───────────────
   ipcMain.handle('fs-delete', async (_event, targetPath) => {
     try {
+      if (fileExplorer && fileExplorer.deleteItemAsync) {
+        fileExplorer.deleteItemAsync(targetPath);
+        return { success: true };
+      }
+      
+      // Fallback to Shell trash if C++ bridge is not available
       await shell.trashItem(targetPath);
       return { success: true };
     } catch (err) {
