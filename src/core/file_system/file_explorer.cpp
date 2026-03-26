@@ -24,7 +24,15 @@ void FileExplorer::openDirectory(const std::string& rootPath, int maxDepth) {
     }
 
     m_root = std::make_unique<FileNode>(p.filename().string(), rootPath, true, 1);
-    scanDirectory(m_root.get(), 0, maxDepth);
+    
+    // Capture snapshot once at start of scan
+    std::unordered_set<std::string> snapshot;
+    {
+        std::lock_guard<std::mutex> lock(m_blacklistMutex);
+        snapshot = m_blacklistedPaths;
+    }
+
+    scanDirectory(m_root.get(), 0, maxDepth, &snapshot);
     m_root->isLoaded = true;
 }
 
@@ -33,7 +41,14 @@ void FileExplorer::expandDirectory(const std::string& dirPath, int maxDepth) {
     if (!node || !node->isDirectory) return;
     if (node->isLoaded) return; // Already expanded
 
-    scanDirectory(node, 0, maxDepth);
+    // Capture snapshot for the sub-scan
+    std::unordered_set<std::string> snapshot;
+    {
+        std::lock_guard<std::mutex> lock(m_blacklistMutex);
+        snapshot = m_blacklistedPaths;
+    }
+
+    scanDirectory(node, 0, maxDepth, &snapshot);
     node->isLoaded = true;
 }
 
@@ -52,7 +67,15 @@ void FileExplorer::refreshDirectory(const std::string& dirPath) {
     // Clear existing children and re-scan
     node->children.clear();
     node->isLoaded = false;
-    scanDirectory(node, 0, 1);
+    
+    // Capture snapshot for refresh
+    std::unordered_set<std::string> snapshot;
+    {
+        std::lock_guard<std::mutex> lock(m_blacklistMutex);
+        snapshot = m_blacklistedPaths;
+    }
+
+    scanDirectory(node, 0, 1, &snapshot);
     node->isLoaded = true;
 }
 
@@ -142,24 +165,30 @@ uint16_t FileExplorer::registerExtension(const std::string& name, bool isDir) {
     return newId;
 }
 
-void FileExplorer::scanDirectory(FileNode* node, int currentDepth, int maxDepth) {
+void FileExplorer::scanDirectory(FileNode* node, int currentDepth, int maxDepth, const std::unordered_set<std::string>* snapshot) {
     if (currentDepth >= maxDepth) return;
 
     std::error_code ec;
     auto it = fs::directory_iterator(node->path, fs::directory_options::skip_permission_denied, ec);
     if (ec) return; // Silently skip directories we can't read
 
+    // Use snapshot if provided, otherwise capture one (for safety/convenience in unexpected calls)
+    std::unordered_set<std::string> localSnapshot;
+    const std::unordered_set<std::string>* targetSnapshot = snapshot;
+    if (!targetSnapshot) {
+        std::lock_guard<std::mutex> lock(m_blacklistMutex);
+        localSnapshot = m_blacklistedPaths;
+        targetSnapshot = &localSnapshot;
+    }
+
     for (const auto& entry : it) {
         std::error_code entryEc;
         const auto& entryPath = entry.path();
         const std::string pathStr = entryPath.string();
 
-        // --- FILTER: Skip blacklisted paths ---
-        {
-            std::lock_guard<std::mutex> lock(m_blacklistMutex);
-            if (m_blacklistedPaths.find(pathStr) != m_blacklistedPaths.end()) {
-                continue;
-            }
+        // --- FILTER: Skip blacklisted paths using the snapshot (O(1) lookup, ZERO Locks!) ---
+        if (targetSnapshot->find(pathStr) != targetSnapshot->end()) {
+            continue;
         }
 
         const bool isDir = entry.is_directory(entryEc);
@@ -183,7 +212,7 @@ void FileExplorer::scanDirectory(FileNode* node, int currentDepth, int maxDepth)
 
         // Recursively scan sub-directories if within depth limit
         if (isDir) {
-            scanDirectory(child.get(), currentDepth + 1, maxDepth);
+            scanDirectory(child.get(), currentDepth + 1, maxDepth, targetSnapshot);
             if (currentDepth + 1 < maxDepth) {
                 child->isLoaded = true;
             }

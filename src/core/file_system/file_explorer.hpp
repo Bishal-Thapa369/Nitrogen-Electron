@@ -124,8 +124,9 @@ private:
      * @param node The parent node to scan children into.
      * @param currentDepth The current recursion depth.
      * @param maxDepth The maximum recursion depth.
+     * @param snapshot A point-in-time snapshot of the blacklist to avoid per-node locking.
      */
-    void scanDirectory(FileNode* node, int currentDepth, int maxDepth);
+    void scanDirectory(FileNode* node, int currentDepth, int maxDepth, const std::unordered_set<std::string>* snapshot = nullptr);
 
     /**
      * @brief Internal recursive finder.
