@@ -67,20 +67,22 @@ export function registerFileOperations(fileExplorer) {
         // 1. Instant hide EVERYTHING in C++ (O(1) UI refresh)
         fileExplorer.deleteItemsBulk(targetPaths);
         
-        // 2. Background Batch Trashing (Prevent OOM/Stalls)
+        // 2. Background Batch Trashing (Ventilated Back-pressure)
         (async () => {
           const batchSize = 50;
           for (let i = 0; i < targetPaths.length; i += batchSize) {
             const batch = targetPaths.slice(i, i + batchSize);
             await Promise.all(batch.map(p => shell.trashItem(p).catch(() => {})));
             
-            // 3. IMPORTANT: Restore visibility in C++ after trashing is DONE 
-            // This ensures that future operations (like paste) to these paths work.
-            if (fileExplorer.unmarkForDeletionBulk) {
-                fileExplorer.unmarkForDeletionBulk(batch);
-            }
-            
-            await new Promise(resolve => setTimeout(resolve, 0));
+            // Allow the OS disk heads and UI thread to breathe
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+
+          // 3. Final atomic unmark (All done!)
+          // Restore visibility for ALL original paths in one go 
+          // (Only essential if files were restored or recreated at same path)
+          if (fileExplorer.unmarkForDeletionBulk) {
+             fileExplorer.unmarkForDeletionBulk(targetPaths);
           }
         })();
 
