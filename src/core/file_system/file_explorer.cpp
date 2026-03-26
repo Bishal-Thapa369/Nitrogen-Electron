@@ -69,75 +69,23 @@ void FileExplorer::markForDeletionBulk(const std::vector<std::string>& paths) {
 }
 
 void FileExplorer::deleteBulkAsync(const std::vector<std::string>& paths, std::function<void(bool)> onComplete) {
-    // 1. Mark for instant-hide (Bulk)
+    // We only handle the "Instant Hide" logic in C++. 
+    // Physical trashing is now handled by Electron's safe Shell API.
     markForDeletionBulk(paths);
-
-    // 2. Launch target background thread
-    std::thread([this, paths, onComplete]() {
-        bool allSuccess = true;
-        size_t processedCount = 0;
-
-        for (const auto& path : paths) {
-            try {
-                std::error_code ec;
-                if (fs::exists(path, ec)) {
-                    fs::remove_all(path, ec);
-                    if (ec) allSuccess = false;
-                }
-            } catch (...) {
-                allSuccess = false;
-            }
-
-            processedCount++;
-
-            // Batch-Cleanup: Optional: every 100 files, we could remove from blacklist
-            // to show progress, but since we are doing 1 UI refresh, we keep them blacklisted
-            // until the end of the whole block for safety.
-        }
-
-        // 3. Final Cleanup: Remove all from blacklist
-        {
-            std::lock_guard<std::mutex> lock(m_blacklistMutex);
-            for (const auto& p : paths) {
-                m_blacklistedPaths.erase(p);
-            }
-        }
-
-        if (onComplete) {
-            onComplete(allSuccess);
-        }
-    }).detach();
+    
+    if (onComplete) {
+        onComplete(true);
+    }
 }
 
 void FileExplorer::deleteItemAsync(const std::string& path, std::function<void(bool)> onComplete) {
-    // 1. Mark for instant-hide
+    // We only handle the "Instant Hide" logic in C++. 
+    // Physical trashing is now handled by Electron's safe Shell API.
     markForDeletion(path);
 
-    // 2. Launch background thread for physical disk removal
-    std::thread([this, path, onComplete]() {
-        bool success = false;
-        try {
-            std::error_code ec;
-            if (fs::exists(path, ec)) {
-                fs::remove_all(path, ec);
-                success = !ec;
-            } else {
-                success = true; // Already gone
-            }
-        } catch (...) {
-            success = false;
-        }
-
-        // 3. Cleanup: Remove from blacklist after disk operation is finished
-        {
-            std::lock_guard<std::mutex> lock(m_blacklistMutex);
-            m_blacklistedPaths.erase(path);
-        }
-
-        if (onComplete) {
-            onComplete(success);
-        }
-    }).detach(); // Detach so the explorer doesn't need to join the thread
+    if (onComplete) {
+        onComplete(true);
+    }
 }
 
 // ---------------------------------------------------------------------------

@@ -40,11 +40,15 @@ export function registerFileOperations(fileExplorer) {
   ipcMain.handle('fs-delete', async (_event, targetPath) => {
     try {
       if (fileExplorer && fileExplorer.deleteItemAsync) {
+        // 1. Instant hide in C++ tree
         fileExplorer.deleteItemAsync(targetPath);
+        
+        // 2. Physical trashing in background (Safe/Recoverable)
+        shell.trashItem(targetPath).catch(err => console.error(`Trash error for ${targetPath}:`, err));
+        
         return { success: true };
       }
       
-      // Fallback to Shell trash if C++ bridge is not available
       await shell.trashItem(targetPath);
       return { success: true };
     } catch (err) {
@@ -52,16 +56,29 @@ export function registerFileOperations(fileExplorer) {
     }
   });
 
-  // ── Delete Bulk (Native C++ Vector Deletion) ─────────────
+  // ── Delete Bulk (Native Hide + Electron Background Trash) ─────────────
   ipcMain.handle('fs-delete-bulk', async (_event, targetPaths) => {
     try {
       if (fileExplorer && fileExplorer.deleteItemsBulk) {
+        // 1. Instant hide EVERYTHING in C++ (O(1) UI refresh)
         fileExplorer.deleteItemsBulk(targetPaths);
+        
+        // 2. Background Batch Trashing (Prevent OOM/Stalls)
+        // We fire and forget this loop so the UI returns instantly
+        (async () => {
+          const batchSize = 50;
+          for (let i = 0; i < targetPaths.length; i += batchSize) {
+            const batch = targetPaths.slice(i, i + batchSize);
+            await Promise.all(batch.map(p => shell.trashItem(p).catch(() => {})));
+            // Yield to event loop to keep app responsive
+            await new Promise(resolve => setTimeout(resolve, 0));
+          }
+        })();
+
         return { success: true };
       }
       
-      // Bulk fallback: loop with trashItem (this is what caused the OOM before,
-      // but only as a last resort if C++ is not loaded for some reason)
+      // Bulk fallback
       for (const p of targetPaths) {
         await shell.trashItem(p);
       }
