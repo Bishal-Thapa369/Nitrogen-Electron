@@ -45,7 +45,7 @@ export const Sidebar: React.FC = () => {
   const { 
     fileTree, expandedFolders, toggleFolder, openFile, activeFilePath, 
     updateNode, selectedPath, selectedPaths, setSelectedPath, setSelectedPaths, collapseAll, 
-    createFile, createFolder, refreshRoot, clipboardItems, hidingPaths
+    createFile, createFolder, refreshRoot, clipboardItems, hidingPaths 
   } = useStore();
   
   // Virtualization State
@@ -136,8 +136,7 @@ export const Sidebar: React.FC = () => {
     if (!fileTree) return flat;
     
     const traverse = (node: FileTreeNode, level: number) => {
-      if (hidingPaths.has(node.path)) return; // HARD HIDE (Ghost removal)
-      
+      if (hidingPaths.has(node.path)) return; // MAGIC BLACKLIST: Instant Hide
       flat.push({ type: 'node', node, level });
       if (node.isDirectory && expandedFolders.includes(node.path)) {
         // If an input is actively being created inside this folder, render it first
@@ -162,7 +161,7 @@ export const Sidebar: React.FC = () => {
     }
     
     return flat;
-  }, [fileTree, expandedFolders, newInput, hidingPaths]);
+  }, [fileTree, expandedFolders, newInput, hidingPaths]); // Reactivity on hidingPaths additions
 
   const handleNodeClick = async (e: React.MouseEvent, node: FileTreeNode) => {
     e.stopPropagation();
