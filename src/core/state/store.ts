@@ -247,11 +247,39 @@ export const useStore = create<EditorState>((set, get) => ({
   },
 
   refreshRoot: async () => {
-    const { rootPath } = get();
+    const { rootPath, expandedFolders } = get();
     if (!rootPath) return;
     try {
-      const tree = await window.electronAPI.expandDirectory(rootPath);
-      if (tree) get().setFileTree(tree, rootPath);
+      // To strictly obliterate ghost files or missing file glitches,
+      // we perform a recursive Deep Reconstitution from the disk state buffer.
+      const buildFreshTreeDeep = async (currentPath: string): Promise<FileTreeNode | null> => {
+        const freshNode = await window.electronAPI.expandDirectory(currentPath);
+        if (!freshNode) return null;
+        
+        // Concurrently refetch deep children if they were expanded
+        if (expandedFolders.includes(currentPath)) {
+           const processedChildren = await Promise.all(
+              freshNode.children.map(async (child: FileTreeNode) => {
+                 if (child.isDirectory && expandedFolders.includes(child.path)) {
+                    const deepChild = await buildFreshTreeDeep(child.path);
+                    return deepChild || child;
+                 }
+                 return child;
+              })
+           );
+           freshNode.children = processedChildren;
+           freshNode.isLoaded = true;
+        }
+        
+        return freshNode;
+      };
+
+      const newTree = await buildFreshTreeDeep(rootPath);
+      
+      if (newTree) {
+         set({ fileTree: newTree });
+         await get().updateExtensionMap();
+      }
     } catch (err) {
       console.error('Refresh failed', err);
     }
