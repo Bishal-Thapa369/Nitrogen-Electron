@@ -4,7 +4,6 @@ import { FileCode, Folder, ChevronRight, ChevronDown, FolderOpen, MoreHorizontal
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { ContextMenu } from './context_menu/context_menu';
-import { BulkConfirmModal } from './bulk_confirm_modal';
 
 
 function cn(...inputs: ClassValue[]) {
@@ -123,6 +122,7 @@ export const Sidebar: React.FC = () => {
           state.selectedPaths.forEach(p => state.duplicateNode(p));
         }
       } else if (e.key === 'Delete' && state.selectedPaths.length > 0) {
+        // Now calling deleteNode directly without confirmation barrier
         state.selectedPaths.forEach(p => state.deleteNode(p));
       }
     };
@@ -521,8 +521,6 @@ export const Sidebar: React.FC = () => {
           onCreate={(type) => startCreation(type)}
         />
       )}
-
-      <BulkConfirmModal />
 
     </div>
   );

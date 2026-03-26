@@ -63,13 +63,6 @@ interface EditorState {
   refreshRoot: () => Promise<void>;
   pasteNode: () => Promise<{ success: boolean; error?: string } | null>;
   duplicateNode: (path: string) => Promise<{ success: boolean; error?: string }>;
-  confirmBulkOperation: { 
-    isOpen: boolean; 
-    itemCount: number; 
-    operation: 'paste' | 'delete'; 
-    onProceed: () => void 
-  } | null;
-  setConfirmBulk: (data: EditorState['confirmBulkOperation']) => void;
 }
 
 // Intelligently merge C++ shallow refreshed nodes with old deeply loaded sub-nodes
@@ -142,8 +135,6 @@ export const useStore = create<EditorState>((set, get) => ({
   isSidebarOpen: true,
   cursorPosition: { line: 1, column: 1 },
   autoSave: true,
-  confirmBulkOperation: null,
-  setConfirmBulk: (data) => set({ confirmBulkOperation: data }),
 
   setFileTree: (tree, rootPath) => {
     set({ fileTree: tree, rootPath, expandedFolders: tree ? [tree.path] : [] });
@@ -351,26 +342,6 @@ export const useStore = create<EditorState>((set, get) => ({
   },
 
   deleteNode: async (targetPath) => {
-    const { selectedPaths } = get();
-    // Use selection count if deleting from a multi-select, otherwise just 1
-    const count = selectedPaths.length > 1 ? selectedPaths.length : 1;
-    
-    // Safety check for mass delete
-    if (count > 200 && !get().confirmBulkOperation?.isOpen) {
-        return new Promise((resolve) => {
-            get().setConfirmBulk({
-                isOpen: true,
-                itemCount: count,
-                operation: 'delete',
-                onProceed: async () => {
-                   const res = await get().deleteNode(targetPath);
-                   get().setConfirmBulk(null);
-                   resolve(res);
-                }
-            });
-        });
-    }
-
     const result = await window.electronAPI.deleteItem(targetPath);
     if (result.success) {
       // We immediately refresh. Native C++ will now "forget" these files
@@ -390,22 +361,6 @@ export const useStore = create<EditorState>((set, get) => ({
   pasteNode: async () => {
     const { clipboardItems, selectedPath, rootPath, fileTree } = get();
     if (!clipboardItems || !fileTree || clipboardItems.paths.length === 0) return null;
-
-    // Safety check for mass paste
-    if (clipboardItems.paths.length > 200 && !get().confirmBulkOperation?.isOpen) {
-        return new Promise((resolve) => {
-            get().setConfirmBulk({
-                isOpen: true,
-                itemCount: clipboardItems.paths.length,
-                operation: 'paste',
-                onProceed: async () => {
-                   const res = await get().pasteNode();
-                   get().setConfirmBulk(null);
-                   resolve(res);
-                }
-            });
-        });
-    }
 
     let destDir = rootPath || '/';
 
