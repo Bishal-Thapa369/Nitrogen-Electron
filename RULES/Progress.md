@@ -125,10 +125,21 @@
 - **Visual Target Status:** Added real-time tracking of the cut clipboard path, dynamically injecting a stylish `opacity-40 grayscale-[50%]` effect to physically echo modern IDE intent tracking before dropping.
 - **Automated Collision Resolution:** Engineered an intelligent collision solver (`-copy`, `-copy2`, etc.) mirroring robust OS functionality natively on duplication operations.
 
+### 28. Multi-Selection & Bulk Clipboard Operations ✅
+- **Array-Based Selection:** Refactored the global state from `selectedPath` (string) to `selectedPaths` (array), enabling native multi-file focus.
+- **Power-User Interactions:** Implemented `Shift+Click` for range selection and `Ctrl+Click` for selective toggling within the virtualized high-speed list.
+- **Concurrent Batch Dispatch:** Upgraded `pasteNode` and `deleteNode` to use `Promise.all()` for simultaneous C++ backend execution, ensuring $O(1)$ UI responsiveness during 100+ item mutations.
+- **Recursive Sync Engine:** Engineered a deep-reconstitution refresh logic that bypasses C++ memory caches to accurately detect external file changes (Dolphin, etc.) while preserving the visual tree shape.
+
+### 29. Contextual Select-All & Safety Guard Rails ✅
+- **Smart Select-All (`Ctrl + A`):** Implemented a context-aware selection engine that intelligently targets siblings or folder children based on the current cursor focus.
+- **The 200-Item Safety Net:** Built a "Threshold Guardian" to protect against accidental mass operations in massive projects (e.g., dataset folders).
+- **Premium Safety UI:** Created a high-saturation, glassmorphic **BulkConfirmModal** with animated glows and Tokyo-Night inspired color palettes to authorize batch transfers.
+- **Collision Protection:** Standardized `Ctrl + C`, `Ctrl + X`, `Ctrl + V`, `Ctrl + D`, and `Delete` as global explorer hotkeys with built-in safety confirmation loops.
+
 ---
 
-## 🚀 Current Focus
-- **Sidebar Search:** Adding a high-speed filter/search bar above the tree to search 100k+ files in real-time.
+## 🚀 Current Focus (Phase 2: Editor & Terminal)
 - **C++ Piece Table Bridge:** Finalizing the N-API binding for the `PieceTable` class to offload text manipulation logic.
-- **Syntax Highlighting Integration:** Planning the transition to C++ native syntax parsing for professional-grade performance.
-
+- **Terminal Integration:** Establishing the PTY (Pseudo-Terminal) bridge with `node-pty` and `xterm.js` for an integrated developer workflow.
+- **Sidebar Search:** Adding a high-speed filter/search bar above the tree to search 100k+ files in real-time.
