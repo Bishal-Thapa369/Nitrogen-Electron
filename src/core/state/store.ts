@@ -47,10 +47,12 @@ interface EditorState {
 
   // Explorer Selection & Clipboard
   selectedPath: string | null;
-  setSelectedPath: (path: string | null) => void;
+  selectedPaths: string[];
+  setSelectedPath: (path: string | null, multi?: boolean) => void;
+  setSelectedPaths: (paths: string[]) => void;
   collapseAll: () => void;
-  clipboardItem: { path: string; type: 'copy' | 'cut' } | null;
-  setClipboardItem: (path: string, type: 'copy' | 'cut') => void;
+  clipboardItems: { paths: string[]; type: 'copy' | 'cut' } | null;
+  setClipboardItems: (paths: string[], type: 'copy' | 'cut') => void;
 
   // File Operations
   renameNode: (oldPath: string, newName: string) => Promise<{ success: boolean; error?: string }>;
@@ -196,9 +198,14 @@ export const useStore = create<EditorState>((set, get) => ({
 
   // Explorer
   selectedPath: null,
-  setSelectedPath: (path) => set({ selectedPath: path }),
-  clipboardItem: null,
-  setClipboardItem: (path, type) => set({ clipboardItem: { path, type } }),
+  selectedPaths: [],
+  setSelectedPath: (path, multi = false) => set((state) => ({ 
+    selectedPath: path, 
+    selectedPaths: multi ? state.selectedPaths : (path ? [path] : []) 
+  })),
+  setSelectedPaths: (paths) => set({ selectedPaths: paths }),
+  clipboardItems: null,
+  setClipboardItems: (paths, type) => set({ clipboardItems: { paths, type } }),
   collapseAll: () => {
     const root = get().fileTree;
     set({ expandedFolders: root ? [root.path] : [] });
@@ -266,20 +273,19 @@ export const useStore = create<EditorState>((set, get) => ({
   },
 
   pasteNode: async () => {
-    const { clipboardItem, selectedPath, rootPath, fileTree } = get();
-    if (!clipboardItem || !fileTree) return null;
+    const { clipboardItems, selectedPath, rootPath, fileTree } = get();
+    if (!clipboardItems || !fileTree || clipboardItems.paths.length === 0) return null;
 
     let destDir = rootPath || '/';
 
     // Determine target directory intelligently based on current selection
     if (selectedPath) {
-      // Find the node to check if it's a directory
       const findNode = (path: string, node: FileTreeNode | null = fileTree): FileTreeNode | null => {
         if (!node) return null;
         if (node.path === path) return node;
         for (const child of node.children) {
           if (child.path === path) return child;
-          if (child.isDirectory && path.startsWith(child.path + '/')) { // Added trailing slash to accurately match prefixes
+          if (child.isDirectory && path.startsWith(child.path + '/')) {
             const found = findNode(path, child);
             if (found) return found;
           }
@@ -291,43 +297,46 @@ export const useStore = create<EditorState>((set, get) => ({
       if (selectedNode) {
         if (selectedNode.isDirectory) {
           destDir = selectedNode.path;
-          // Ensure target folder is expanded naturally
           if (!get().expandedFolders.includes(destDir)) {
              set((state) => ({ expandedFolders: [...state.expandedFolders, destDir] }));
           }
         } else {
-          // If a file is selected, paste into its parent
           destDir = getParentPath(selectedNode.path);
         }
       }
     }
 
-    const { path: sourcePath, type } = clipboardItem;
-    let result;
-
-    if (type === 'copy') {
-      result = await window.electronAPI.copyItem(sourcePath, destDir);
-    } else {
-      result = await window.electronAPI.moveItem(sourcePath, destDir);
-      // Automatically clear clipboard after a successful cut
-      if (result.success) {
-        set({ clipboardItem: null });
+    const { paths: sourcePaths, type } = clipboardItems;
+    
+    // Execute multiple operations concurrently on the native backend
+    const operations = sourcePaths.map(sourcePath => {
+      if (type === 'copy') {
+        return window.electronAPI.copyItem(sourcePath, destDir);
+      } else {
+        return window.electronAPI.moveItem(sourcePath, destDir);
       }
+    });
+
+    const results = await Promise.all(operations);
+    const anySuccess = results.some(r => r.success);
+
+    if (type === 'cut') {
+      set({ clipboardItems: null });
     }
 
-    if (result.success) {
+    if (anySuccess) {
       const refreshedDest = await window.electronAPI.refreshDirectory(destDir);
       
       set((state) => {
         let newTree = state.fileTree;
         if (!newTree) return state;
         
-        // Optimistically remove the cut item locally to avoid hitting the disk twice
         if (type === 'cut') {
-          newTree = removeTreeNode(newTree, sourcePath);
+          for (const sourcePath of sourcePaths) {
+            newTree = removeTreeNode(newTree, sourcePath);
+          }
         }
 
-        // Apply the refreshed destination node which includes the pasted file
         if (refreshedDest) {
           newTree = updateTreeNode(newTree, destDir, refreshedDest);
         }
@@ -338,7 +347,7 @@ export const useStore = create<EditorState>((set, get) => ({
       await get().updateExtensionMap();
     }
 
-    return result;
+    return results[0]; // Return the status of the first operation as a fallback
   },
 
   duplicateNode: async (targetPath) => {

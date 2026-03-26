@@ -12,7 +12,7 @@ interface ContextMenuProps {
 }
 
 export const ContextMenu: React.FC<ContextMenuProps> = ({ node, x, y, onClose, onCreate }) => {
-  const { renameNode, deleteNode, rootPath, setClipboardItem, clipboardItem, pasteNode, duplicateNode } = useStore();
+  const { renameNode, deleteNode, rootPath, setClipboardItems, clipboardItems, pasteNode, duplicateNode, selectedPaths } = useStore();
   const [mode, setMode] = useState<'menu' | 'rename' | 'confirmDelete'>('menu');
   const [newName, setNewName] = useState(node?.name || '');
   const [error, setError] = useState<string | null>(null);
@@ -40,13 +40,23 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ node, x, y, onClose, o
     onClose();
   };
 
+  const getTargetPaths = () => {
+    if (!node) return [];
+    if (selectedPaths.includes(node.path)) {
+      return selectedPaths;
+    }
+    return [node.path];
+  };
+
   const handleCut = () => {
-    if (node) setClipboardItem(node.path, 'cut');
+    const paths = getTargetPaths();
+    if (paths.length > 0) setClipboardItems(paths, 'cut');
     onClose();
   };
 
   const handleCopy = () => {
-    if (node) setClipboardItem(node.path, 'copy');
+    const paths = getTargetPaths();
+    if (paths.length > 0) setClipboardItems(paths, 'copy');
     onClose();
   };
 
@@ -56,7 +66,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ node, x, y, onClose, o
   };
 
   const handleDuplicate = async () => {
-    if (node) await duplicateNode(node.path);
+    const paths = getTargetPaths();
+    for (const p of paths) {
+      await duplicateNode(p);
+    }
     onClose();
   };
 
@@ -122,7 +135,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ node, x, y, onClose, o
       x: Math.max(PADDING, newX), 
       y: Math.max(PADDING, newY) 
     });
-  }, [x, y, mode, node, clipboardItem]);
+  }, [x, y, mode, node, clipboardItems]);
 
   const handleRename = async () => {
     if (!node) return;
@@ -142,15 +155,21 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ node, x, y, onClose, o
   };
 
   const handleDelete = async () => {
-    if (!node) return;
     setLoading(true);
     setError(null);
-    const result = await deleteNode(node.path);
+    const paths = getTargetPaths();
+    let hasError = false;
+    for (const p of paths) {
+      const result = await deleteNode(p);
+      if (!result.success) {
+        hasError = true;
+        setError(result.error || 'Delete failed.');
+        break;
+      }
+    }
     setLoading(false);
-    if (result.success) {
+    if (!hasError) {
       onClose();
-    } else {
-      setError(result.error || 'Delete failed.');
     }
   };
 
@@ -183,7 +202,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ node, x, y, onClose, o
             <span>New Folder</span>
           </button>
           
-          {clipboardItem && (
+          {clipboardItems && (
             <>
               <div className="mx-3 my-1 h-px bg-[var(--color-border-subtle)]" />
               <button
@@ -247,13 +266,15 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ node, x, y, onClose, o
               </button>
               
               <div className="mx-3 my-1 h-px bg-[var(--color-border-subtle)]" />
-              <button
-                onClick={() => setMode('rename')}
-                className="w-full flex items-center gap-3 px-4 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
-              >
-                <Pencil size={14} />
-                <span>Rename</span>
-              </button>
+              {getTargetPaths().length === 1 && (
+                <button
+                  onClick={() => setMode('rename')}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
+                >
+                  <Pencil size={14} />
+                  <span>Rename</span>
+                </button>
+              )}
               <button
                 onClick={() => setMode('confirmDelete')}
                 className="w-full flex items-center gap-3 px-4 py-2 text-[13px] text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
@@ -305,8 +326,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ node, x, y, onClose, o
         <div className="p-3 space-y-2">
           <p className="text-[11px] font-bold uppercase tracking-wider text-red-400">Confirm Delete</p>
           <p className="text-[13px] text-[var(--color-text-secondary)]">
-            Delete <strong className="text-[var(--color-text-primary)]">{node.name}</strong>
-            {node.isDirectory ? ' and all its contents' : ''}?
+            Delete <strong className="text-[var(--color-text-primary)]">
+              {getTargetPaths().length > 1 ? `${getTargetPaths().length} items` : node.name}
+            </strong>
+            {node.isDirectory && getTargetPaths().length === 1 ? ' and all its contents' : ''}?
           </p>
           {error && <p className="text-[11px] text-red-400">{error}</p>}
           <div className="flex justify-end gap-2 pt-1">

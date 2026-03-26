@@ -43,8 +43,8 @@ type VirtualRow =
 export const Sidebar: React.FC = () => {
   const { 
     fileTree, expandedFolders, toggleFolder, openFile, activeFilePath, 
-    updateNode, selectedPath, setSelectedPath, collapseAll, 
-    createFile, createFolder, refreshRoot, clipboardItem 
+    updateNode, selectedPath, selectedPaths, setSelectedPath, setSelectedPaths, collapseAll, 
+    createFile, createFolder, refreshRoot, clipboardItems 
   } = useStore();
   
   // Virtualization State
@@ -64,10 +64,20 @@ export const Sidebar: React.FC = () => {
   const handleContextMenu = useCallback((e: React.MouseEvent, node: FileTreeNode | null) => {
     e.preventDefault();
     e.stopPropagation();
-    if (node) setSelectedPath(node.path);
-    else setSelectedPath(null);
+    
+    const state = useStore.getState();
+    // If we right click something NOT in our selection, reset the selection to just this item
+    if (node) {
+        if (!state.selectedPaths.includes(node.path)) {
+            setSelectedPaths([node.path]);
+            setSelectedPath(node.path);
+        }
+    } else {
+        setSelectedPath(null);
+        setSelectedPaths([]);
+    }
     setContextMenu({ node, x: e.clientX, y: e.clientY });
-  }, [setSelectedPath]);
+  }, [setSelectedPath, setSelectedPaths]);
 
   // Focus input automatically when creating
   useEffect(() => {
@@ -88,6 +98,33 @@ export const Sidebar: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [fileTree]);
+
+  // Global Keyboard Shortcuts (Ctrl+C, V, X, D, Delete)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is actively typing in an input field (e.g. rename, terminal)
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+
+      const state = useStore.getState();
+      
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'c' && state.selectedPaths.length > 0) {
+          state.setClipboardItems(state.selectedPaths, 'copy');
+        } else if (e.key === 'x' && state.selectedPaths.length > 0) {
+          state.setClipboardItems(state.selectedPaths, 'cut');
+        } else if (e.key === 'v') {
+          state.pasteNode();
+        } else if (e.key === 'd' && state.selectedPaths.length > 0) {
+          e.preventDefault();
+          state.selectedPaths.forEach(p => state.duplicateNode(p));
+        }
+      } else if (e.key === 'Delete' && state.selectedPaths.length > 0) {
+        state.selectedPaths.forEach(p => state.deleteNode(p));
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   // Flatten tree for O(1) indexed rendering (including root and dynamic input fields)
   const flattenedVisibleNodes = React.useMemo(() => {
@@ -121,8 +158,39 @@ export const Sidebar: React.FC = () => {
     return flat;
   }, [fileTree, expandedFolders, newInput]);
 
-  const handleNodeClick = async (node: FileTreeNode) => {
-    setSelectedPath(node.path);
+  const handleNodeClick = async (e: React.MouseEvent, node: FileTreeNode) => {
+    e.stopPropagation();
+
+    const state = useStore.getState();
+    const currentSelected = state.selectedPaths;
+
+    if (e.ctrlKey || e.metaKey) {
+      if (currentSelected.includes(node.path)) {
+        // Toggle off
+        const newPaths = currentSelected.filter(p => p !== node.path);
+        setSelectedPaths(newPaths);
+        if (state.selectedPath === node.path) setSelectedPath(newPaths.length > 0 ? newPaths[newPaths.length - 1] : null, true);
+      } else {
+        // Toggle on
+        setSelectedPaths([...currentSelected, node.path]);
+        setSelectedPath(node.path, true);
+      }
+    } else if (e.shiftKey && state.selectedPath) {
+      // Range select (Shift Click)
+      const flatNodePaths = flattenedVisibleNodes.filter(n => n.type === 'node').map(n => (n as any).node.path);
+      const startIdx = flatNodePaths.indexOf(state.selectedPath);
+      const endIdx = flatNodePaths.indexOf(node.path);
+      if (startIdx !== -1 && endIdx !== -1) {
+        const min = Math.min(startIdx, endIdx);
+        const max = Math.max(startIdx, endIdx);
+        const range = flatNodePaths.slice(min, max + 1);
+        setSelectedPaths(range);
+      }
+    } else {
+      // Normal click
+      setSelectedPaths([node.path]);
+      setSelectedPath(node.path);
+    }
     
     if (node.isDirectory) {
       toggleFolder(node.path);
@@ -268,9 +336,12 @@ export const Sidebar: React.FC = () => {
           }}
           className="flex-1 overflow-y-auto custom-scrollbar relative"
           onContextMenu={(e) => handleContextMenu(e, null)}
-          onClick={() => {
-            if (selectedPath) setSelectedPath(null);
-            if (newInput) setNewInput(null);
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedPath(null);
+              setSelectedPaths([]);
+              if (newInput) setNewInput(null);
+            }
           }}
         >
           {fileTree ? (
@@ -357,14 +428,14 @@ export const Sidebar: React.FC = () => {
                   // Render standard node row
                   const { node, level } = item;
                   const isExpanded = node.isDirectory && expandedFolders.includes(node.path);
-                  const isSelected = selectedPath === node.path;
+                  const isSelected = selectedPaths.includes(node.path);
                   const isActive = activeFilePath === node.path; // Indicates an open document tab
-                  const isCutTarget = clipboardItem?.type === 'cut' && clipboardItem.path === node.path;
+                  const isCutTarget = clipboardItems?.type === 'cut' && clipboardItems.paths.includes(node.path);
 
                   return (
                     <div
                       key={node.path}
-                      onClick={(e) => { e.stopPropagation(); handleNodeClick(node); }}
+                      onClick={(e) => handleNodeClick(e, node)}
                       onContextMenu={(e) => handleContextMenu(e, node)}
                       className={cn(
                         "absolute left-0 right-0 flex items-center cursor-pointer text-[13px] transition-all duration-200 ease-out group z-10",
