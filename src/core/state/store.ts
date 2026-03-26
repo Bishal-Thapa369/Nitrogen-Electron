@@ -439,25 +439,9 @@ export const useStore = create<EditorState>((set, get) => ({
       });
       await window.electronAPI.unmarkForDeletionBulk(destPaths);
 
-      const refreshedDest = await window.electronAPI.refreshDirectory(destDir, true);
-      
-      set((state) => {
-        let newTree = state.fileTree;
-        if (!newTree) return state;
-        
-        if (type === 'cut') {
-          for (const sourcePath of sourcePaths) {
-            newTree = removeTreeNode(newTree, sourcePath);
-          }
-        }
-
-        if (refreshedDest) {
-          newTree = updateTreeNode(newTree, destDir, refreshedDest);
-        }
-        
-        return { fileTree: newTree };
-      });
-
+      // Security & Consistency Rule: Perform a full root reload to 
+      // ensure the entire tree structure is perfectly synchronized.
+      await get().refreshRoot();
       await get().updateExtensionMap();
     }
 
