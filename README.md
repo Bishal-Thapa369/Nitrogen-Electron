@@ -14,10 +14,15 @@ Nitrogen isn't an "Electron app" in the traditional sense. It follows a strict *
 
 - **High-Performance Virtualization:** Custom O(1) virtualized tree engine supporting 100k+ files with cinematic motion blur and 144Hz scroll-fluidity.
 - **Native C++ File Explorer:** Recursive directory scanning using `std::filesystem` with depth-limited lazy-loading.
+- **Advanced Multi-Selection**: Full support for `Shift-Click` range selection and `Ctrl+Click` selective arrays for bulk operations.
+- **Global Keyboard Shortcuts**: Standard IDE shortcuts (`Ctrl+C`, `Ctrl+X`, `Ctrl+V`, `Ctrl+D`, `Delete`) mapped to the explorer for seamless keyboard-only workflows.
+- **Deep Reconstitution Engine**: A recursive, cache-bypassing sync engine that obliterates "ghost files" and ensures 100% data integrity with external file managers (Dolphin, etc.).
 - **Native Clipboard Operations:** Integrated Move, Copy, Paste, and Duplicate engine with intelligent collision resolution (`-copy`, `-copy2`, etc.) and visual cut-opacity tracking.
-- **N-API Bridge:** High-throughput communication between the C++ core and the Electron main process.
 - **Piece-Table Text Buffer:** $O(1)$ performance for text insertions, deletions, and undo/redo operations (Phase 2 core focus).
 - **CodeWeaver Aesthetics:** A premium, glassmorphic UI designed for deep focus and visual excellence.
+
+### 🏁 Phase 1: Mission Complete
+The File Explorer is now a robust, solved pillar. It provides a native-grade foundation with O(1) rendering, recursive C++ scanning, and professional-grade multi-selection/clipboard logic. With this pillar finalized and archived, the project is now 100% focused on Phase 2: High-Performance Editor and Terminal.
 
 ## 🛠️ Technology Stack
 
@@ -63,7 +68,7 @@ Nitrogen follows a strict architectural protocol documented in the `RULES/` dire
 ---
 
 ### 📅 Current Milestone
-**Milestone 27: Native Clipboard Operations & Intelligent Duplication** — 100% Phase 1 completion archived on the **`v2`** branch. Currently transitioning to Phase 2: Sidebar Search and the C++ Piece Table bridge integration.
+**Milestone 28: Phase 1 (Native Explorer) Official Completion** — We have finalized the Hybrid Native File Explorer with Multi-Selection, Keyboard Shortcuts, and Deep Sync logic. This known-good state is archived on the **`v2`** branch. Currently transitioning to Phase 2: Pieces Table N-API Bridge and Terminal integration.
 
 ---
 Created by [Bishal Thapa](https://github.com/Bishal-Thapa369)
