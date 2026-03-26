@@ -113,6 +113,7 @@
 - **Togglable Root:** Refactored the sidebar to treat the project root as a togglable folder, allowing users to collapse the entire tree.
 - **Selection Persistence:** Added a `selectedPath` state to the store for consistent focus tracking across keyboard and mouse interactions.
 - **Virtualization Stability:** Fixed deep recursion bugs in the tree-walker (`findNode`) and ensured the inline editor works correctly within the high-speed virtualized scroll container.
+- **Branch Archival:** Formally archived the 100% complete Phase 1 code state on the **`v2`** GitHub branch.
 
 ---
 
