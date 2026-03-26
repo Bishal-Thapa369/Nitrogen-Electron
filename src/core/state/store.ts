@@ -63,8 +63,6 @@ interface EditorState {
   refreshRoot: () => Promise<void>;
   pasteNode: () => Promise<{ success: boolean; error?: string } | null>;
   duplicateNode: (path: string) => Promise<{ success: boolean; error?: string }>;
-  hidingPaths: Set<string>;
-  setHidingPaths: (paths: Set<string>) => void;
   confirmBulkOperation: { 
     isOpen: boolean; 
     itemCount: number; 
@@ -145,9 +143,7 @@ export const useStore = create<EditorState>((set, get) => ({
   cursorPosition: { line: 1, column: 1 },
   autoSave: true,
   confirmBulkOperation: null,
-  hidingPaths: new Set(),
   setConfirmBulk: (data) => set({ confirmBulkOperation: data }),
-  setHidingPaths: (paths) => set({ hidingPaths: paths }),
 
   setFileTree: (tree, rootPath) => {
     set({ fileTree: tree, rootPath, expandedFolders: tree ? [tree.path] : [] });
@@ -367,12 +363,6 @@ export const useStore = create<EditorState>((set, get) => ({
                 itemCount: count,
                 operation: 'delete',
                 onProceed: async () => {
-                   const { selectedPaths } = get();
-                   // INSTANT HIDE: Add paths to blacklist for O(1) UI masking
-                   const newHiding = new Set(get().hidingPaths);
-                   selectedPaths.forEach(p => newHiding.add(p));
-                   set({ hidingPaths: newHiding });
-
                    const res = await get().deleteNode(targetPath);
                    get().setConfirmBulk(null);
                    resolve(res);
@@ -381,35 +371,18 @@ export const useStore = create<EditorState>((set, get) => ({
         });
     }
 
-    // Capture standard single-path delete in hiding paths too
-    if (!get().confirmBulkOperation?.isOpen) {
-        set((state) => {
-            const next = new Set(state.hidingPaths);
-            next.add(targetPath);
-            return { hidingPaths: next };
-        });
+    const result = await window.electronAPI.deleteItem(targetPath);
+    if (result.success) {
+      const { fileTree, activeFilePath, openTabs } = get();
+      if (fileTree) {
+        set({ fileTree: removeTreeNode(fileTree, targetPath) });
+      }
+      // Close tab if the deleted file was open
+      if (activeFilePath === targetPath || openTabs.find(t => t.path === targetPath)) {
+        get().closeFile(targetPath);
+      }
     }
-
-    // Execute multiple operations concurrently
-    const targets = selectedPaths.length > 1 ? selectedPaths : [targetPath];
-    
-    // Execute multiple operations concurrently
-    const operations = targets.map(p => window.electronAPI.deleteItem(p));
-    const results = await Promise.all(operations);
-    const anySuccess = results.some(r => r.success);
-
-    if (anySuccess) {
-      // 1. CLEAR local memory (Blacklist) and re-sync natively
-      set((state) => {
-        const nextHiding = new Set(state.hidingPaths);
-        targets.forEach(p => nextHiding.delete(p));
-        return { hidingPaths: nextHiding };
-      });
-
-      // 2. Perform ONE single Deep Sync from C++ disk scan
-      await get().refreshRoot();
-    }
-    return results[0];
+    return result;
   },
 
   pasteNode: async () => {
@@ -424,13 +397,6 @@ export const useStore = create<EditorState>((set, get) => ({
                 itemCount: clipboardItems.paths.length,
                 operation: 'paste',
                 onProceed: async () => {
-                   // INSTANT HIDE (For Cut/Move): Mask sources immediately
-                   if (get().clipboardItems?.type === 'cut') {
-                       const next = new Set(get().hidingPaths);
-                       get().clipboardItems!.paths.forEach(p => next.add(p));
-                       set({ hidingPaths: next });
-                   }
-
                    const res = await get().pasteNode();
                    get().setConfirmBulk(null);
                    resolve(res);
@@ -488,18 +454,26 @@ export const useStore = create<EditorState>((set, get) => ({
     }
 
     if (anySuccess) {
-      // CLEAR local memory (Blacklist) and re-sync natively
+      const refreshedDest = await window.electronAPI.refreshDirectory(destDir);
+      
       set((state) => {
-        const nextHiding = new Set(state.hidingPaths);
+        let newTree = state.fileTree;
+        if (!newTree) return state;
+        
         if (type === 'cut') {
-            sourcePaths.forEach(p => nextHiding.delete(p));
+          for (const sourcePath of sourcePaths) {
+            newTree = removeTreeNode(newTree, sourcePath);
+          }
         }
-        return { hidingPaths: nextHiding };
+
+        if (refreshedDest) {
+          newTree = updateTreeNode(newTree, destDir, refreshedDest);
+        }
+        
+        return { fileTree: newTree };
       });
 
       await get().updateExtensionMap();
-      // ONE single Deep Sync from C++ disk scan
-      await get().refreshRoot();
     }
 
     return results[0]; // Return the status of the first operation as a fallback
