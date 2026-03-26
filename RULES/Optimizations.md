@@ -525,12 +525,23 @@ But don't do this on UI thread.
 
 ---
 
-## File watcher debouncing
+## 5.4 Technical Drill-down: Streaming vs. Loading (The "Pipe" vs. "Tank" Analogy)
 
-When watching files for external changes:
-- debounce rapid change events
-- don't reload on every tiny change
-- wait for "quiet period" (e.g., 200ms no changes)
+To maintain a professional-grade memory footprint, Nitrogen never "loads" mutation data unless absolutely necessary.
+
+### The "Tank" Anti-Pattern (Bad)
+Hobbyist applications often read an entire file into a RAM buffer before writing it back to disk. 
+- **The Risk:** Copying a 10GB file on a machine with 8GB of RAM will cause an out-of-memory (OOM) crash or extreme system thrashing.
+- **Complexity:** $O(N)$ memory usage.
+
+### The Nitrogen "Pipe" Pattern (Professional)
+We utilize **Streaming I/O** (via `fs.cp` and kernel-level `copy_file_range`).
+- **The Logic:** We open a stream between the source and destination. We load a tiny chunk (e.g., 2MB), write it immediately, clear it, and repeat. 
+- **Memory Fingerprint:** $O(1)$ memory usage. Whether copying 1MB or 1 Terabyte, Nitrogen’s RAM usage remains constant at roughly ~20MB-50MB for the operation.
+
+### Atomic "Rename" & Cross-Device Fallbacks
+1. **Same-Drive Moves:** We prioritize `fs.rename`. This is a metadata-only operation. The bytes don't move; the OS just updates the file's index address. Speed is instantaneous.
+2. **Cross-Drive Moves (EXDEV):** If you move data from an SSD to a USB, an atomic rename fails. Nitrogen automatically detects the `EXDEV` error and falls back to a **Streamed Copy + Trash Item** sequence, ensuring reliability without UI blocking.
 
 ---
 
