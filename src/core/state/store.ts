@@ -399,22 +399,14 @@ export const useStore = create<EditorState>((set, get) => ({
     const anySuccess = results.some(r => r.success);
 
     if (anySuccess) {
+      // 1. CLEAR local memory (Blacklist) and re-sync natively
       set((state) => {
-        let newTree = state.fileTree;
-        if (!newTree) return state;
-        
-        targets.forEach(p => {
-            newTree = removeTreeNode(newTree!, p);
-        });
-
-        // CLEAR Hiding paths after native execution is synced
         const nextHiding = new Set(state.hidingPaths);
         targets.forEach(p => nextHiding.delete(p));
-
-        return { fileTree: newTree, hidingPaths: nextHiding };
+        return { hidingPaths: nextHiding };
       });
 
-      // Verification finish
+      // 2. Perform ONE single Deep Sync from C++ disk scan
       await get().refreshRoot();
     }
     return results[0];
@@ -496,31 +488,17 @@ export const useStore = create<EditorState>((set, get) => ({
     }
 
     if (anySuccess) {
-      const refreshedDest = await window.electronAPI.refreshDirectory(destDir);
-      
+      // CLEAR local memory (Blacklist) and re-sync natively
       set((state) => {
-        let newTree = state.fileTree;
-        if (!newTree) return state;
-        
-        // Remove from blacklist after successful move/paste logic
         const nextHiding = new Set(state.hidingPaths);
-
         if (type === 'cut') {
-          for (const sourcePath of sourcePaths) {
-            newTree = removeTreeNode(newTree, sourcePath);
-            nextHiding.delete(sourcePath);
-          }
+            sourcePaths.forEach(p => nextHiding.delete(p));
         }
-
-        if (refreshedDest) {
-          newTree = updateTreeNode(newTree, destDir, refreshedDest);
-        }
-        
-        return { fileTree: newTree, hidingPaths: nextHiding };
+        return { hidingPaths: nextHiding };
       });
 
       await get().updateExtensionMap();
-      // Final Verify
+      // ONE single Deep Sync from C++ disk scan
       await get().refreshRoot();
     }
 
