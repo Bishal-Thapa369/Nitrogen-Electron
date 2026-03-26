@@ -50,7 +50,14 @@
 - `src/ui/tabs/tabs.tsx` - Tab management UI.
 - `src/ui/status_bar/status_bar.tsx` - Informational status bar at the bottom.
 - `src/ui/top_bar/top_bar.tsx` - Application control bar at the top.
-- `src/ui/terminal/terminal.tsx` - Integrated terminal interface connected to the high-performance C++ backend.
+- `src/ui/terminal/terminal.tsx` - The clean 40-line structural orchestrator (Shell) for the integrated terminal.
+- `src/ui/terminal/components/` - Atomic Visual Components.
+    - `terminal_header.tsx`: Tab navigation and action buttons (Clear, Maximize, Close).
+- `src/ui/terminal/hooks/` - Specialized Logic Subsystems.
+    - `use_terminal_logic.ts`: The XTerm and N-API engine.
+    - `use_terminal_theme_sync.ts`: Light/Dark mode visual synchronization.
+- `src/ui/terminal/utils/` - Global Terminal utilities.
+    - `terminal_themes.ts`: The 40+ line ANSI/Neon palette definitions.
 - `src/ui/command_palette/command_palette.tsx` - Quick-action command interface.
 
 ## 📂 src/core/ (C++ Backend & Logic)

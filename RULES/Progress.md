@@ -188,6 +188,15 @@
 
 ---
 
+
+### 35. Atomic Terminal Architecture ✅
+- **Frontend Refactoring:** Successfully split the 180-line `terminal.tsx` into **4 specialized atomic subsystems** (Header, Themes, Logic, Theme-Sync).
+- **Engine Isolation:** Moved all XTerm.js lifecycle and N-API PTY bridge logic into the `useTerminalLogic` hook, creating a clean 40-line structural orchestrator.
+- **Visual Precision:** Isolated the 40+ line ANSI/Neon palette into a pure configuration utility, ensuring that future UI tweaks never risk the native terminal data pipeline.
+- **Parity Achievement:** Maintained 100% functional and visual parity with the original high-performance terminal during the modular migration.
+
+---
+
 ## 🚀 Current Focus (Phase 3: The C++ Piece Table Core)
 - **C++ Piece Table Bridge:** Finalizing the N-API binding for the `PieceTable` class to offload text manipulation logic for O(1) editing of massive files using the native piece-chain algorithm.
 - **Atomic State Sync:** Establishing the synchronization layer between the native Piece Table and the now-modular UI display layer.
