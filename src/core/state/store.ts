@@ -253,8 +253,12 @@ export const useStore = create<EditorState>((set, get) => ({
       // To strictly obliterate ghost files or missing file glitches,
       // we perform a recursive Deep Reconstitution from the disk state buffer.
       const buildFreshTreeDeep = async (currentPath: string): Promise<FileTreeNode | null> => {
-        const freshNode = await window.electronAPI.expandDirectory(currentPath);
+        // By calling refreshDirectory directly, we physically force the C++ backend to 
+        // dump its memory buffer for this node, query the actual Operating System kernel, 
+        // and return the exact state of the Hard Drive right now.
+        const freshNode = await window.electronAPI.refreshDirectory(currentPath);
         if (!freshNode) return null;
+
         
         // Concurrently refetch deep children if they were expanded
         if (expandedFolders.includes(currentPath)) {
