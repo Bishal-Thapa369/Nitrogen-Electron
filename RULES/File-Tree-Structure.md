@@ -29,6 +29,7 @@
 - `src/ui/main.tsx` - Bootstrapper for the React application.
 - `src/ui/styles/index.css` - Global styling including Tailwind 4 themes and custom glassmorphism.
 - `src/ui/sidebar/sidebar.tsx` - Sidebar component for recursive native file explorer.
+- `src/ui/sidebar/context_menu/context_menu.tsx` - Right-click context menu (Rename, Delete, Cut, Copy, Paste, Duplicate).
 - `src/ui/editor/editor.tsx` - Monaco-based core editor rendering surface.
 - `src/ui/tabs/tabs.tsx` - Tab management UI.
 - `src/ui/status_bar/status_bar.tsx` - Informational status bar at the bottom.
@@ -44,6 +45,9 @@
 - `src/core/file_system/file_explorer.hpp` - FileExplorer class API (scan, expand, collapse, refresh).
 - `src/core/file_system/file_explorer.cpp` - Implementation using std::filesystem with depth-limited scanning.
 - `src/core/bridge/file_explorer_bridge.cpp` - N-API bridge exposing C++ FileExplorer to Node.js/Electron.
+
+## 📂 src/main/ipc/ (Modular IPC Handlers)
+- `src/main/ipc/file_operations.js` - IPC handlers for file rename, delete, move, and copy operations.
 
 ## 📂 scripts/ (Tooling)
 - `scripts/ram-usages.sh` - Utility task to monitor and audit current Electron/Node process memory usage.

@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useStore, FileTreeNode } from '../../core/state/store';
 import { FileCode, Folder, ChevronRight, ChevronDown, FolderOpen, MoreHorizontal, FilePlus2, FolderPlus, RefreshCw, Folders } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { ContextMenu } from './context_menu/context_menu';
 
 
 function cn(...inputs: ClassValue[]) {
@@ -10,7 +11,6 @@ function cn(...inputs: ClassValue[]) {
 }
 
 // Algorithmic Icon Assignment (No Hardcoding)
-// The system automatically maps any C++ calculated typeId to a distinct, consistent color.
 const FILE_COLORS = [
   '#38bdf8', '#facc15', '#60a5fa', '#4ade80', '#94a3b8', 
   '#f472b6', '#fb923c', '#34d399', '#c084fc', '#fde047',
@@ -27,18 +27,25 @@ const getIconByType = (typeId: number | undefined, isDirectory: boolean) => {
     return <FileCode size={14} className="text-[var(--color-text-tertiary)]" />;
   }
 
-  // Map the C++ calculated hash ID to a specific color index
   const colorIndex = typeId % FILE_COLORS.length;
   const assignedColor = FILE_COLORS[colorIndex];
 
   return <FileCode size={14} style={{ color: assignedColor }} />;
 };
 
-const ITEM_HEIGHT = 24; // Fixed height for each virtualized row
-const OVERSCAN = 30;    // Increased buffer (60 total) for smoother high-speed scrolls
+const ITEM_HEIGHT = 24; 
+const OVERSCAN = 30;    
+
+type VirtualRow = 
+  | { type: 'node'; node: FileTreeNode; level: number }
+  | { type: 'input'; itemType: 'file' | 'folder'; parentPath: string; level: number };
 
 export const Sidebar: React.FC = () => {
-  const { fileTree, expandedFolders, toggleFolder, openFile, activeFilePath, updateNode } = useStore();
+  const { 
+    fileTree, expandedFolders, toggleFolder, openFile, activeFilePath, 
+    updateNode, selectedPath, setSelectedPath, collapseAll, 
+    createFile, createFolder, refreshRoot, clipboardItem 
+  } = useStore();
   
   // Virtualization State
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,7 +54,28 @@ export const Sidebar: React.FC = () => {
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
 
-  // Measure container height on mount/resize
+  // Context Menu State
+  const [contextMenu, setContextMenu] = useState<{ node: FileTreeNode | null; x: number; y: number } | null>(null);
+
+  const [newInput, setNewInput] = useState<{ type: 'file' | 'folder'; parentPath: string } | null>(null);
+  const [newInputValue, setNewInputValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent, node: FileTreeNode | null) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (node) setSelectedPath(node.path);
+    else setSelectedPath(null);
+    setContextMenu({ node, x: e.clientX, y: e.clientY });
+  }, [setSelectedPath]);
+
+  // Focus input automatically when creating
+  useEffect(() => {
+    if (newInput) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [newInput]);
+
   useEffect(() => {
     if (containerRef.current) {
       setContainerHeight(containerRef.current.clientHeight);
@@ -61,29 +89,41 @@ export const Sidebar: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [fileTree]);
 
-  // Flatten tree for O(1) indexed rendering
+  // Flatten tree for O(1) indexed rendering (including root and dynamic input fields)
   const flattenedVisibleNodes = React.useMemo(() => {
-    const flat: { node: FileTreeNode; level: number }[] = [];
+    const flat: VirtualRow[] = [];
     if (!fileTree) return flat;
     
     const traverse = (node: FileTreeNode, level: number) => {
-      flat.push({ node, level });
+      flat.push({ type: 'node', node, level });
       if (node.isDirectory && expandedFolders.includes(node.path)) {
+        // If an input is actively being created inside this folder, render it first
+        if (newInput && newInput.parentPath === node.path) {
+          flat.push({ type: 'input', itemType: newInput.type, parentPath: node.path, level: level + 1 });
+        }
         for (const child of node.children) {
           traverse(child, level + 1);
         }
       }
     };
     
-    // Start traversal from root's children, root itself is handled manually
-    for (const child of fileTree.children) {
-      traverse(child, 0);
+    // We do NOT map the root node as part of the virtualized list since it is sticky
+    // BUT we must check if input is directly under root
+    if (expandedFolders.includes(fileTree.path)) {
+      if (newInput && newInput.parentPath === fileTree.path) {
+        flat.push({ type: 'input', itemType: newInput.type, parentPath: fileTree.path, level: 0 });
+      }
+      for (const child of fileTree.children) {
+        traverse(child, 0);
+      }
     }
     
     return flat;
-  }, [fileTree, expandedFolders]);
+  }, [fileTree, expandedFolders, newInput]);
 
   const handleNodeClick = async (node: FileTreeNode) => {
+    setSelectedPath(node.path);
+    
     if (node.isDirectory) {
       toggleFolder(node.path);
       // Lazy load from C++ if needed
@@ -106,6 +146,75 @@ export const Sidebar: React.FC = () => {
       } catch (err) {
         console.error('Failed to read file:', err);
       }
+    }
+  };
+
+  // Helper to find a node by path
+  const findNode = (path: string, node: FileTreeNode | null = fileTree): FileTreeNode | null => {
+    if (!node) return null;
+    if (node.path === path) return node;
+    for (const child of node.children) {
+      if (child.path === path) return child;
+      // Ensure we match whole folder names by adding a trailing slash to the check
+      if (child.isDirectory && path.startsWith(child.path + '/')) {
+        const found = findNode(path, child);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  // Actions
+  const startCreation = (type: 'file' | 'folder') => {
+    if (!fileTree) return;
+    
+    let targetParentPath = fileTree.path;
+    
+    // Determine creation parent based on selection
+    if (selectedPath) {
+      const selectedNode = findNode(selectedPath);
+      if (selectedNode) {
+        if (selectedNode.isDirectory) {
+          targetParentPath = selectedNode.path;
+          // Ensure folder is expanded
+          if (!expandedFolders.includes(selectedNode.path)) {
+            toggleFolder(selectedNode.path);
+          }
+        } else {
+          // It's a file, so create in its parent folder
+          const parts = selectedNode.path.split('/');
+          parts.pop();
+          targetParentPath = parts.join('/') || '/';
+        }
+      }
+    }
+
+    setNewInput({ type, parentPath: targetParentPath });
+    setNewInputValue('');
+  };
+
+  const handleCreateSubmit = async () => {
+    if (!newInput || !newInputValue.trim()) {
+      setNewInput(null);
+      return;
+    }
+
+    const { type, parentPath } = newInput;
+    const name = newInputValue.trim();
+    setNewInput(null); // Optimistic close
+
+    if (type === 'file') {
+      await createFile(parentPath, name);
+    } else {
+      await createFolder(parentPath, name);
+    }
+  };
+
+  const handleCreateKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleCreateSubmit();
+    } else if (e.key === 'Escape') {
+      setNewInput(null);
     }
   };
 
@@ -143,13 +252,10 @@ export const Sidebar: React.FC = () => {
             const delta = Math.abs(currentTop - lastScrollTopRef.current);
             setScrollTop(currentTop);
             
-            // Calculate and apply cinematic motion blur (Direct DOM update for performance)
-            // v < 50 = no blur, v = 225 = 1.5px blur, cap at 1.5px
+            // Motion blur effect
             const blurAmount = Math.min(1.5, delta / 150);
             if (e.currentTarget) {
               e.currentTarget.style.setProperty('--scroll-blur', `${blurAmount}px`);
-              
-              // Reset blur after scrolling stops
               if (scrollResetRef.current) clearTimeout(scrollResetRef.current);
               scrollResetRef.current = setTimeout(() => {
                 if (containerRef.current) {
@@ -161,32 +267,53 @@ export const Sidebar: React.FC = () => {
             lastScrollTopRef.current = currentTop;
           }}
           className="flex-1 overflow-y-auto custom-scrollbar relative"
+          onContextMenu={(e) => handleContextMenu(e, null)}
+          onClick={() => {
+            if (selectedPath) setSelectedPath(null);
+            if (newInput) setNewInput(null);
+          }}
         >
           {fileTree ? (
             <div className="pb-4">
-              {/* Root Folder Header */}
-              <div className="flex items-center px-3 sticky top-0 bg-[var(--color-bg-panel)] z-30 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-all duration-150 group/root h-[32px]">
-                <ChevronDown size={14} className="mr-1 text-[var(--color-text-tertiary)]" />
+              {/* Root Folder Header - Sticky */}
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedPath(fileTree.path);
+                  toggleFolder(fileTree.path);
+                }}
+                className={cn(
+                  "flex items-center px-3 sticky top-0 bg-[var(--color-bg-panel)] z-30 text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-all duration-150 group/root h-[32px]",
+                  selectedPath === fileTree.path && "bg-[var(--color-accent-glow)] text-[var(--color-text-primary)] font-extrabold ring-1 ring-inset ring-[var(--color-accent-primary)]/20"
+                )}
+              >
+                <ChevronDown 
+                    size={14} 
+                    className={cn(
+                        "mr-1 text-[var(--color-text-tertiary)] transition-transform duration-150",
+                        !expandedFolders.includes(fileTree.path) && "-rotate-90"
+                    )} 
+                />
                 <span className="truncate flex-1">{fileTree.name}</span>
                 
-                {/* Action Icons reveal on explorer hover */}
-                <div className="flex items-center space-x-1.5 opacity-0 group-hover/explorer-section:opacity-100 transition-opacity duration-200 bg-[var(--color-bg-panel)] z-40 px-1">
-                  <div className="p-1 rounded-md hover:bg-[var(--color-bg-active)] cursor-pointer text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-all" title="New File">
+                {/* 4 ACTION ICONS FOR ROOT */}
+                <div className="flex items-center space-x-1.5 opacity-0 group-hover/explorer-section:opacity-100 transition-opacity duration-200 bg-[var(--color-bg-panel)] z-40 px-1" onClick={e => e.stopPropagation()}>
+                  <div onClick={() => startCreation('file')} className="p-1 rounded-md hover:bg-[var(--color-bg-active)] cursor-pointer text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-all" title="New File">
                     <FilePlus2 size={14} />
                   </div>
-                  <div className="p-1 rounded-md hover:bg-[var(--color-bg-active)] cursor-pointer text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-all" title="New Folder">
+                  <div onClick={() => startCreation('folder')} className="p-1 rounded-md hover:bg-[var(--color-bg-active)] cursor-pointer text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-all" title="New Folder">
                     <FolderPlus size={14} />
                   </div>
-                  <div className="p-1 rounded-md hover:bg-[var(--color-bg-active)] cursor-pointer text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-all" title="Refresh">
+                  <div onClick={() => refreshRoot()} className="p-1 rounded-md hover:bg-[var(--color-bg-active)] cursor-pointer text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-all" title="Refresh">
                     <RefreshCw size={14} />
                   </div>
-                  <div className="p-1 rounded-md hover:bg-[var(--color-bg-active)] cursor-pointer text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-all" title="Collapse All">
+                  <div onClick={() => collapseAll()} className="p-1 rounded-md hover:bg-[var(--color-bg-active)] cursor-pointer text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] transition-all" title="Collapse All">
                     <Folders size={14} />
                   </div>
                 </div>
               </div>
 
-              {/* Virtualized Tree Container with Motion Blur Layering */}
+              {/* Virtualized Tree Container */}
               <div style={{ 
                 height: `${totalHeight}px`, 
                 position: 'relative', 
@@ -196,18 +323,55 @@ export const Sidebar: React.FC = () => {
                 willChange: 'filter, transform'
               }}>
                 {visibleItems.map((item, index) => {
-                  const { node, level } = item;
                   const absoluteIndex = startIndex + index;
+
+                  // Render Injectable Input Row
+                  if (item.type === 'input') {
+                    return (
+                        <div
+                            key="new-input-field"
+                            className="absolute left-0 right-0 flex items-center bg-[var(--color-bg-active)] z-10 transition-all duration-200 ease-out"
+                            style={{ 
+                                top: `${absoluteIndex * ITEM_HEIGHT}px`,
+                                height: `${ITEM_HEIGHT}px`,
+                                paddingLeft: `${item.level * 16 + (item.itemType === 'folder' ? 12 : 28)}px` 
+                            }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="mr-2 flex items-center justify-center w-4 h-4 shrink-0 opacity-70">
+                                {item.itemType === 'folder' ? <Folder size={14} /> : <FileCode size={14} />}
+                            </div>
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={newInputValue}
+                                onChange={(e) => setNewInputValue(e.target.value)}
+                                onKeyDown={handleCreateKeyDown}
+                                onBlur={handleCreateSubmit}
+                                className="flex-1 bg-transparent border-none outline-none text-[13px] text-[var(--color-text-primary)] ring-1 ring-[var(--color-accent-primary)] px-1 -ml-1 rounded-[2px]"
+                            />
+                        </div>
+                    );
+                  }
+
+                  // Render standard node row
+                  const { node, level } = item;
                   const isExpanded = node.isDirectory && expandedFolders.includes(node.path);
-                  const isActive = activeFilePath === node.path;
+                  const isSelected = selectedPath === node.path;
+                  const isActive = activeFilePath === node.path; // Indicates an open document tab
+                  const isCutTarget = clipboardItem?.type === 'cut' && clipboardItem.path === node.path;
 
                   return (
                     <div
                       key={node.path}
-                      onClick={() => handleNodeClick(node)}
+                      onClick={(e) => { e.stopPropagation(); handleNodeClick(node); }}
+                      onContextMenu={(e) => handleContextMenu(e, node)}
                       className={cn(
-                        "absolute left-0 right-0 flex items-center cursor-pointer text-[13px] transition-colors duration-150 group z-10",
-                        isActive ? "bg-[var(--color-accent-glow)] text-[var(--color-text-primary)] font-medium" : "hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)]"
+                        "absolute left-0 right-0 flex items-center cursor-pointer text-[13px] transition-all duration-200 ease-out group z-10",
+                        isSelected || isActive ? "bg-[var(--color-bg-active)]" : "hover:bg-[var(--color-bg-hover)]",
+                        isSelected && "ring-1 ring-inset ring-[var(--color-border-focus)]/50",
+                        isActive && "text-[var(--color-text-primary)] font-medium bg-[var(--color-accent-glow)]!",
+                        isCutTarget && "opacity-40 grayscale-[50%]"
                       )}
                       style={{ 
                         top: `${absoluteIndex * ITEM_HEIGHT}px`,
@@ -271,6 +435,17 @@ export const Sidebar: React.FC = () => {
         <span>Timeline</span>
         <ChevronRight size={14} strokeWidth={2.5} className="opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
+
+      {/* ── Overlays ── */}
+      {contextMenu && (
+        <ContextMenu
+          node={contextMenu.node}
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          onCreate={(type) => startCreation(type)}
+        />
+      )}
 
     </div>
   );

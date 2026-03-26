@@ -98,3 +98,36 @@
 - **Syntax Highlighting Integration:** Planning the transition to C++ native syntax parsing for professional-grade performance.
 - **Performance Benchmarking:** Auditing the RAM and CPU overhead of the C++ file system bridge under extreme stress (1M+ items).
 
+---
+
+### 25. File Explorer Interactions: Context Menu & Inline Creation ✅
+- **Modular IPC Architecture:** Created `src/main/ipc/file_operations.js` with isolated handlers for rename, delete, and creation operations — ensuring single-purpose file isolation per `FIle-Rules.md`.
+- **Inline Creation Engine:** Built a dynamic injector for the virtualized tree. Clicking "New File/Folder" now inserts a live text input directly into the list at the correct nesting level.
+- **Context-Aware Logic:** Creation operations automatically detect the current selection to decide if the new item goes inside a folder or beside a file.
+- **Context Menu (Right-Click):** Implemented `context_menu.tsx` with portal-based rendering. Supports creation, renaming (with extension protection), and deletion (Recycle Bin).
+- **Architecture Pivot (DnD):** Removed the experimental HTML5 Drag & Drop system for V1.0 to ensure 100% stability within Electron's multi-process environment.
+
+### 26. Phase 1 Polish: System Integration ✅
+- **System Reveal:** Implemented "Reveal in Explorer/Finder" using Electron's `shell` API to bridge the gap between the editor and the OS.
+- **Clipboard Integration:** Added "Copy Path" and "Copy Relative Path" to the context menu via the `clipboard` API.
+- **Togglable Root:** Refactored the sidebar to treat the project root as a togglable folder, allowing users to collapse the entire tree.
+- **Selection Persistence:** Added a `selectedPath` state to the store for consistent focus tracking across keyboard and mouse interactions.
+- **Virtualization Stability:** Fixed deep recursion bugs in the tree-walker (`findNode`) and ensured the inline editor works correctly within the high-speed virtualized scroll container.
+
+---
+
+### 27. Native Clipboard Operations & Intelligent Duplication ✅
+- **C++ Integrated Move/Copy:** Formally integrated native `fs-copy` and `fs-move` via IPC, mapping directly to high-speed Node file system operations to guarantee cross-device transfer functionality and bypass recursive C++ limitations.
+- **Smart Deep State Merging:** Refactored the `updateTreeNode` logic with `mergeTreeState` to intelligently cache and merge deeply nested arrays (`children`), ensuring C++'s shallow disk refreshes don't blindly collapse expanded subfolders.
+- **Synchronous Rendering Pipeline:** Consolidated asynchronous UI store updates within `pasteNode` into a single, unified transaction block. This entirely eliminates intermediate "flicker" renders across the React virtualization tree.
+- **Cinematic Pop-in Transitions:** Activated `transition-all duration-200 ease-out` on the absolute-positioned list items. Modifying data safely within the store now generates beautiful automatic glide animations on insertion/deletion.
+- **Visual Target Status:** Added real-time tracking of the cut clipboard path, dynamically injecting a stylish `opacity-40 grayscale-[50%]` effect to physically echo modern IDE intent tracking before dropping.
+- **Automated Collision Resolution:** Engineered an intelligent collision solver (`-copy`, `-copy2`, etc.) mirroring robust OS functionality natively on duplication operations.
+
+---
+
+## 🚀 Current Focus
+- **Sidebar Search:** Adding a high-speed filter/search bar above the tree to search 100k+ files in real-time.
+- **C++ Piece Table Bridge:** Finalizing the N-API binding for the `PieceTable` class to offload text manipulation logic.
+- **Syntax Highlighting Integration:** Planning the transition to C++ native syntax parsing for professional-grade performance.
+

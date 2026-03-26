@@ -12,5 +12,15 @@ interface Window {
     getTree: () => Promise<any>;
     getExtensions: () => Promise<Record<string, string>>;
     readFile: (filePath: string) => Promise<string | null>;
+
+    // File Operations
+    renameItem: (oldPath: string, newName: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
+    deleteItem: (targetPath: string) => Promise<{ success: boolean; error?: string }>;
+    createFile: (parentDir: string, fileName: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
+    createFolder: (parentDir: string, folderName: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
+    revealItem: (targetPath: string) => Promise<{ success: boolean; error?: string }>;
+    copyPath: (targetPath: string) => Promise<{ success: boolean; error?: string }>;
+    copyItem: (sourcePath: string, destDir: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
+    moveItem: (sourcePath: string, destDir: string) => Promise<{ success: boolean; newPath?: string; error?: string }>;
   };
 }
