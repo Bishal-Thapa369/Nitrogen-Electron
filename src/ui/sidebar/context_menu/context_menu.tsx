@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useStore, FileTreeNode } from '../../../core/state/store';
 import { Pencil, Trash2, FilePlus2, FolderPlus, ExternalLink, Copy, Scissors, ClipboardPaste, CopyPlus } from 'lucide-react';
@@ -17,10 +17,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ node, x, y, onClose, o
   const [newName, setNewName] = useState(node?.name || '');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [position, setPosition] = useState({ x, y });
+  
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // ... (handleClick/Key effects)
 
   const handleReveal = async () => {
     if (node) await window.electronAPI.revealItem(node.path);
@@ -89,11 +89,40 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ node, x, y, onClose, o
         inputRef.current.select();
       }
     }
-  }, [mode, node]);
+  },[mode, node]);
 
-  // Keep menu inside viewport
-  const adjustedX = Math.min(x, window.innerWidth - 220);
-  const adjustedY = Math.min(y, window.innerHeight - 200);
+  // Dynamically calculate actual dimensions to prevent cutoff
+  useLayoutEffect(() => {
+    if (!menuRef.current) return;
+    
+    const rect = menuRef.current.getBoundingClientRect();
+    const PADDING = 24; // Extra margin so it doesn't sit entirely flush against screen edges
+    
+    let newX = x;
+    let newY = y;
+
+    // Check right edge
+    if (newX + rect.width > window.innerWidth - PADDING) {
+      newX = window.innerWidth - rect.width - PADDING;
+    }
+    
+    // Check bottom edge
+    if (newY + rect.height > window.innerHeight - PADDING) {
+      // If there's no space below, flip the menu to open *above* the cursor
+      if (y - rect.height > PADDING) {
+        newY = y - rect.height;
+      } else {
+        // Otherwise, just rest it comfortably above the bottom edge
+        newY = window.innerHeight - rect.height - PADDING;
+      }
+    }
+
+    // Ensure it doesn't fall off the top or left side either
+    setPosition({ 
+      x: Math.max(PADDING, newX), 
+      y: Math.max(PADDING, newY) 
+    });
+  }, [x, y, mode, node, clipboardItem]);
 
   const handleRename = async () => {
     if (!node) return;
@@ -130,8 +159,8 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ node, x, y, onClose, o
       ref={menuRef}
       className="fixed z-[9999] min-w-[200px] rounded-lg overflow-hidden shadow-2xl border border-[var(--color-border-subtle)]"
       style={{
-        left: adjustedX,
-        top: adjustedY,
+        left: position.x,
+        top: position.y,
         backgroundColor: 'var(--color-bg-panel)',
         backdropFilter: 'blur(20px)',
       }}
