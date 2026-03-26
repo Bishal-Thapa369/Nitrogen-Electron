@@ -60,7 +60,7 @@ void FileExplorer::collapseDirectory(const std::string& dirPath) {
     node->isLoaded = false;
 }
 
-void FileExplorer::refreshDirectory(const std::string& dirPath) {
+void FileExplorer::refreshDirectory(const std::string& dirPath, bool force) {
     FileNode* node = findNodeMutable(m_root.get(), dirPath);
     if (!node || !node->isDirectory) return;
 
@@ -68,14 +68,18 @@ void FileExplorer::refreshDirectory(const std::string& dirPath) {
     node->children.clear();
     node->isLoaded = false;
     
-    // Capture snapshot for refresh
-    std::unordered_set<std::string> snapshot;
-    {
-        std::lock_guard<std::mutex> lock(m_blacklistMutex);
-        snapshot = m_blacklistedPaths;
+    if (force) {
+        // Absolute Scan: Ignore the blacklist entirely
+        scanDirectory(node, 0, 1, nullptr);
+    } else {
+        // Standard Scan: Respect the blacklist using a snapshot
+        std::unordered_set<std::string> snapshot;
+        {
+            std::lock_guard<std::mutex> lock(m_blacklistMutex);
+            snapshot = m_blacklistedPaths;
+        }
+        scanDirectory(node, 0, 1, &snapshot);
     }
-
-    scanDirectory(node, 0, 1, &snapshot);
     node->isLoaded = true;
 }
 

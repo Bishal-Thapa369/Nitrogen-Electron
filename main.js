@@ -95,8 +95,8 @@ function createWindow() {
   });
 
   // Refresh a directory
-  ipcMain.handle('refresh-directory', async (_event, dirPath) => {
-    const node = fileExplorer.refreshDirectory(dirPath);
+  ipcMain.handle('refresh-directory', async (_event, dirPath, force = false) => {
+    const node = fileExplorer.refreshDirectory(dirPath, force);
     return node;
   });
 

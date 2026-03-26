@@ -10,7 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openFolderDialog: () => ipcRenderer.invoke('open-folder-dialog'),
   expandDirectory: (dirPath) => ipcRenderer.invoke('expand-directory', dirPath),
   collapseDirectory: (dirPath) => ipcRenderer.invoke('collapse-directory', dirPath),
-  refreshDirectory: (dirPath) => ipcRenderer.invoke('refresh-directory', dirPath),
+  refreshDirectory: (dirPath, force = false) => ipcRenderer.invoke('refresh-directory', dirPath, force),
   getTree: () => ipcRenderer.invoke('get-tree'),
   getExtensions: () => ipcRenderer.invoke('get-extensions'),
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),

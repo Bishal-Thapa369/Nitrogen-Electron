@@ -8,7 +8,7 @@ interface Window {
     openFolderDialog: () => Promise<any>;
     expandDirectory: (dirPath: string) => Promise<any>;
     collapseDirectory: (dirPath: string) => Promise<any>;
-    refreshDirectory: (dirPath: string) => Promise<any>;
+    refreshDirectory: (dirPath: string, force?: boolean) => Promise<any>;
     getTree: () => Promise<any>;
     getExtensions: () => Promise<Record<string, string>>;
     readFile: (filePath: string) => Promise<string | null>;

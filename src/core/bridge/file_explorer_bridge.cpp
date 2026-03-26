@@ -101,7 +101,7 @@ Napi::Value CollapseDirectory(const Napi::CallbackInfo& info) {
     return env.Undefined();
 }
 
-// refreshDirectory(dirPath: string): object | null
+// refreshDirectory(dirPath: string, force?: boolean): object | null
 Napi::Value RefreshDirectory(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
 
@@ -115,7 +115,12 @@ Napi::Value RefreshDirectory(const Napi::CallbackInfo& info) {
     }
 
     std::string dirPath = info[0].As<Napi::String>().Utf8Value();
-    g_explorer->refreshDirectory(dirPath);
+    bool force = false;
+    if (info.Length() >= 2 && info[1].IsBoolean()) {
+        force = info[1].As<Napi::Boolean>().Value();
+    }
+
+    g_explorer->refreshDirectory(dirPath, force);
 
     const auto* node = g_explorer->findNode(dirPath);
     if (!node) return env.Null();

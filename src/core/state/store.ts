@@ -275,7 +275,7 @@ export const useStore = create<EditorState>((set, get) => ({
       // Creation Priority: Unmark new path just in case it was part of a recent deletion 
       await window.electronAPI.unmarkForDeletionBulk([newPath]);
 
-      const refreshed = await window.electronAPI.refreshDirectory(parentDir);
+      const refreshed = await window.electronAPI.refreshDirectory(parentDir, true);
       if (refreshed) await get().updateNode(parentDir, refreshed);
     }
     return result;
@@ -288,7 +288,7 @@ export const useStore = create<EditorState>((set, get) => ({
       // Creation Priority: Ensure the newly created file isn't hiding in the blacklist
       await window.electronAPI.unmarkForDeletionBulk([newPath]);
 
-      const refreshed = await window.electronAPI.refreshDirectory(parentDir);
+      const refreshed = await window.electronAPI.refreshDirectory(parentDir, true);
       if (refreshed) await get().updateNode(parentDir, refreshed);
     }
     return result;
@@ -306,7 +306,7 @@ export const useStore = create<EditorState>((set, get) => ({
       if (!expandedFolders.includes(parentDir)) {
         set((state) => ({ expandedFolders: [...state.expandedFolders, parentDir] }));
       }
-      const refreshed = await window.electronAPI.refreshDirectory(parentDir);
+      const refreshed = await window.electronAPI.refreshDirectory(parentDir, true);
       if (refreshed) await get().updateNode(parentDir, refreshed);
     }
     return result;
@@ -319,10 +319,10 @@ export const useStore = create<EditorState>((set, get) => ({
       // To strictly obliterate ghost files or missing file glitches,
       // we perform a recursive Deep Reconstitution from the disk state buffer.
       const buildFreshTreeDeep = async (currentPath: string): Promise<FileTreeNode | null> => {
-        // By calling refreshDirectory directly, we physically force the C++ backend to 
-        // dump its memory buffer for this node, query the actual Operating System kernel, 
-        // and return the exact state of the Hard Drive right now.
-        const freshNode = await window.electronAPI.refreshDirectory(currentPath);
+        // By calling refreshDirectory directly with force=true, we physically force the C++ backend 
+        // to OBLITERATE its memory buffer for this node, ignore any blacklists, 
+        // query the actual Operating System kernel, and return the exact state of the Hard Drive.
+        const freshNode = await window.electronAPI.refreshDirectory(currentPath, true);
         if (!freshNode) return null;
 
         
@@ -439,7 +439,7 @@ export const useStore = create<EditorState>((set, get) => ({
       });
       await window.electronAPI.unmarkForDeletionBulk(destPaths);
 
-      const refreshedDest = await window.electronAPI.refreshDirectory(destDir);
+      const refreshedDest = await window.electronAPI.refreshDirectory(destDir, true);
       
       set((state) => {
         let newTree = state.fileTree;
@@ -469,7 +469,7 @@ export const useStore = create<EditorState>((set, get) => ({
     // Duplicate is just a copy to the same directory
     const result = await window.electronAPI.copyItem(targetPath, parentDir);
     if (result.success) {
-      const refreshed = await window.electronAPI.refreshDirectory(parentDir);
+      const refreshed = await window.electronAPI.refreshDirectory(parentDir, true);
       if (refreshed) await get().updateNode(parentDir, refreshed);
     }
     return result;

@@ -47,8 +47,9 @@ public:
     /**
      * @brief Refresh a specific directory by re-scanning its contents.
      * @param dirPath Absolute path of the directory to refresh.
+     * @param force If true, ignores the deletion blacklist and performs an absolute scan.
      */
-    void refreshDirectory(const std::string& dirPath);
+    void refreshDirectory(const std::string& dirPath, bool force = false);
 
     // --- Query API ---
 
