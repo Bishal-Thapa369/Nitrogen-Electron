@@ -68,6 +68,18 @@ void FileExplorer::markForDeletionBulk(const std::vector<std::string>& paths) {
     }
 }
 
+void FileExplorer::unmarkForDeletionBulk(const std::vector<std::string>& paths) {
+    std::lock_guard<std::mutex> lock(m_blacklistMutex);
+    for (const auto& p : paths) {
+        m_blacklistedPaths.erase(p);
+    }
+}
+
+void FileExplorer::clearDeletionBlacklist() {
+    std::lock_guard<std::mutex> lock(m_blacklistMutex);
+    m_blacklistedPaths.clear();
+}
+
 void FileExplorer::deleteBulkAsync(const std::vector<std::string>& paths, std::function<void(bool)> onComplete) {
     // We only handle the "Instant Hide" logic in C++. 
     // Physical trashing is now handled by Electron's safe Shell API.

@@ -71,11 +71,22 @@ public:
      */
     void markForDeletion(const std::string& path);
 
-    /**
+     /**
      * @brief Mark multiple paths as "being deleted" atomically.
      * @param paths List of absolute paths to hide.
      */
     void markForDeletionBulk(const std::vector<std::string>& paths);
+
+    /**
+     * @brief Clear the deletion flag for multiple paths, making them visible again.
+     * @param paths List of absolute paths to restore.
+     */
+    void unmarkForDeletionBulk(const std::vector<std::string>& paths);
+
+    /**
+     * @brief Completely clear the deletion blacklist.
+     */
+    void clearDeletionBlacklist();
 
     /**
      * @brief Physically delete multiple files or directories from the disk in a single background thread.

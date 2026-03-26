@@ -44,7 +44,11 @@ export function registerFileOperations(fileExplorer) {
         fileExplorer.deleteItemAsync(targetPath);
         
         // 2. Physical trashing in background (Safe/Recoverable)
-        shell.trashItem(targetPath).catch(err => console.error(`Trash error for ${targetPath}:`, err));
+        shell.trashItem(targetPath).then(() => {
+          if (fileExplorer.unmarkForDeletionBulk) {
+            fileExplorer.unmarkForDeletionBulk([targetPath]);
+          }
+        }).catch(err => console.error(`Trash error for ${targetPath}:`, err));
         
         return { success: true };
       }
@@ -64,13 +68,18 @@ export function registerFileOperations(fileExplorer) {
         fileExplorer.deleteItemsBulk(targetPaths);
         
         // 2. Background Batch Trashing (Prevent OOM/Stalls)
-        // We fire and forget this loop so the UI returns instantly
         (async () => {
           const batchSize = 50;
           for (let i = 0; i < targetPaths.length; i += batchSize) {
             const batch = targetPaths.slice(i, i + batchSize);
             await Promise.all(batch.map(p => shell.trashItem(p).catch(() => {})));
-            // Yield to event loop to keep app responsive
+            
+            // 3. IMPORTANT: Restore visibility in C++ after trashing is DONE 
+            // This ensures that future operations (like paste) to these paths work.
+            if (fileExplorer.unmarkForDeletionBulk) {
+                fileExplorer.unmarkForDeletionBulk(batch);
+            }
+            
             await new Promise(resolve => setTimeout(resolve, 0));
           }
         })();
@@ -78,7 +87,6 @@ export function registerFileOperations(fileExplorer) {
         return { success: true };
       }
       
-      // Bulk fallback
       for (const p of targetPaths) {
         await shell.trashItem(p);
       }
@@ -86,6 +94,22 @@ export function registerFileOperations(fileExplorer) {
     } catch (err) {
       return { success: false, error: err.message };
     }
+  });
+
+  ipcMain.handle('unmark-for-deletion-bulk', async (_event, targetPaths) => {
+    if (fileExplorer && fileExplorer.unmarkForDeletionBulk) {
+      fileExplorer.unmarkForDeletionBulk(targetPaths);
+      return true;
+    }
+    return false;
+  });
+
+  ipcMain.handle('clear-deletion-blacklist', async () => {
+    if (fileExplorer && fileExplorer.clearDeletionBlacklist) {
+      fileExplorer.clearDeletionBlacklist();
+      return true;
+    }
+    return false;
   });
 
   // ── Create File ───────────────────────────────────────────

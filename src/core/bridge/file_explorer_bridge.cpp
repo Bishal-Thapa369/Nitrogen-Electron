@@ -203,6 +203,40 @@ Napi::Value DeleteItemsBulk(const Napi::CallbackInfo& info) {
     return Napi::Boolean::New(env, true);
 }
 
+Napi::Value UnmarkForDeletionBulk(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    if (!g_explorer) {
+        Napi::Error::New(env, "No directory is open.").ThrowAsJavaScriptException();
+        return Napi::Boolean::New(env, false);
+    }
+    if (info.Length() < 1 || !info[0].IsArray()) {
+        return Napi::Boolean::New(env, false);
+    }
+
+    Napi::Array pathsArray = info[0].As<Napi::Array>();
+    std::vector<std::string> paths;
+    paths.reserve(pathsArray.Length());
+
+    for (uint32_t i = 0; i < pathsArray.Length(); ++i) {
+        Napi::Value val = pathsArray[i];
+        if (val.IsString()) {
+            paths.push_back(val.As<Napi::String>().Utf8Value());
+        }
+    }
+    
+    g_explorer->unmarkForDeletionBulk(paths);
+    return Napi::Boolean::New(env, true);
+}
+
+Napi::Value ClearDeletionBlacklist(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    if (g_explorer) {
+        g_explorer->clearDeletionBlacklist();
+    }
+    return Napi::Boolean::New(env, true);
+}
+
 // ---------------------------------------------------------------------------
 // Module Registration
 // ---------------------------------------------------------------------------
@@ -215,6 +249,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
     exports.Set("getExtensions", Napi::Function::New(env, GetExtensions));
     exports.Set("deleteItemAsync", Napi::Function::New(env, DeleteItemAsync));
     exports.Set("deleteItemsBulk", Napi::Function::New(env, DeleteItemsBulk));
+    exports.Set("unmarkForDeletionBulk", Napi::Function::New(env, UnmarkForDeletionBulk));
+    exports.Set("clearDeletionBlacklist", Napi::Function::New(env, ClearDeletionBlacklist));
     return exports;
 }
 

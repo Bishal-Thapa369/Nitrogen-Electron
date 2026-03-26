@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   renameItem: (oldPath, newName) => ipcRenderer.invoke('fs-rename', oldPath, newName),
   deleteItem: (targetPath) => ipcRenderer.invoke('fs-delete', targetPath),
   deleteItemsBulk: (targetPaths) => ipcRenderer.invoke('fs-delete-bulk', targetPaths),
+  unmarkForDeletionBulk: (targetPaths) => ipcRenderer.invoke('unmark-for-deletion-bulk', targetPaths),
   createFile: (parentDir, fileName) => ipcRenderer.invoke('fs-create-file', parentDir, fileName),
   createFolder: (parentDir, folderName) => ipcRenderer.invoke('fs-create-folder', parentDir, folderName),
   revealItem: (targetPath) => ipcRenderer.invoke('fs-reveal', targetPath),
