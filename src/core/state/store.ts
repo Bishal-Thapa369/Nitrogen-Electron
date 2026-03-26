@@ -54,8 +54,6 @@ interface EditorState {
   collapseAll: () => void;
   clipboardItems: { paths: string[]; type: 'copy' | 'cut' } | null;
   setClipboardItems: (paths: string[], type: 'copy' | 'cut') => void;
-  hidingPaths: Set<string>;
-  setHidingPaths: (paths: string[]) => void;
 
   // File Operations
   renameNode: (oldPath: string, newName: string) => Promise<{ success: boolean; error?: string }>;
@@ -144,15 +142,8 @@ export const useStore = create<EditorState>((set, get) => ({
   isSidebarOpen: true,
   cursorPosition: { line: 1, column: 1 },
   autoSave: true,
-  hidingPaths: new Set(),
   confirmBulkOperation: null,
   setConfirmBulk: (data) => set({ confirmBulkOperation: data }),
-
-  setHidingPaths: (paths) => set((state) => {
-    const newHiding = new Set(state.hidingPaths);
-    paths.forEach(p => newHiding.add(p));
-    return { hidingPaths: newHiding };
-  }),
 
   setFileTree: (tree, rootPath) => {
     set({ fileTree: tree, rootPath, expandedFolders: tree ? [tree.path] : [] });
@@ -360,12 +351,13 @@ export const useStore = create<EditorState>((set, get) => ({
   },
 
   deleteNode: async (targetPath) => {
-    const { selectedPaths, setHidingPaths } = get();
-    // Use selection count if deleting from a multi-select, otherwise just 1
-    const count = selectedPaths.length > 1 ? selectedPaths.length : 1;
+    const { selectedPaths, fileTree, activeFilePath, openTabs } = get();
+    // Identify targets: either the current selection (if multi-select) or just the targetPath
+    const targets = selectedPaths.length > 1 ? selectedPaths : [targetPath];
+    const count = targets.length;
     
-    // Threshold is higher now because this method is ultra-fast
-    if (count > 2000 && !get().confirmBulkOperation?.isOpen) {
+    // Safety check for mass delete
+    if (count > 200 && !get().confirmBulkOperation?.isOpen) {
         return new Promise((resolve) => {
             get().setConfirmBulk({
                 isOpen: true,
@@ -380,22 +372,43 @@ export const useStore = create<EditorState>((set, get) => ({
         });
     }
 
-    // PHASE 1: Optimistic Hide
-    const targets = selectedPaths.length > 1 ? [...selectedPaths] : [targetPath];
-    setHidingPaths(targets);
+    // ── OPTIMISTIC UI REMOVAL ── (Instant speed)
+    if (fileTree) {
+      let nextTree = { ...fileTree };
+      for (const pathToDel of targets) {
+        nextTree = removeTreeNode(nextTree, pathToDel) as FileTreeNode;
+      }
+      
+      set({ 
+        fileTree: nextTree,
+        selectedPaths: [],
+        selectedPath: null
+      });
 
-    // PHASE 2: Background Execute
-    const results = await Promise.all(targets.map(p => window.electronAPI.deleteItem(p)));
-    const allSuccessful = results.every(r => r.success);
-
-    // PHASE 3: Atomic Sync
-    await get().refreshRoot();
-    set({ hidingPaths: new Set(), selectedPaths: [], selectedPath: null });
-
-    if (allSuccessful) {
-        return { success: true };
+      // Optimistically close tabs
+      targets.forEach(path => {
+        if (activeFilePath === path || (activeFilePath && activeFilePath.startsWith(path + '/')) || openTabs.find(t => t.path === path)) {
+          get().closeFile(path);
+        }
+      });
     }
-    return { success: false, error: "One or more files failed to delete or were interrupted" };
+
+    // ── BACKGROUND EXECUTION ──
+    try {
+      if (targets.length > 1) {
+        await Promise.all(targets.map(p => window.electronAPI.deleteItem(p)));
+      } else {
+        await window.electronAPI.deleteItem(targetPath);
+      }
+      
+      // Verification Refresh
+      await get().refreshRoot();
+      return { success: true };
+    } catch (err: any) {
+      console.error('Mass delete background task failed', err);
+      await get().refreshRoot(); // Refresh to restore UI state if some deletes failed
+      return { success: false, error: err?.message || 'Mass delete failed' };
+    }
   },
 
   pasteNode: async () => {
