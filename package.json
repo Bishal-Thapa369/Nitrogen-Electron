@@ -6,8 +6,8 @@
   "main": "main.js",
   "scripts": {
     "dev": "vite",
-    "dev:full": "concurrently \"tsx server.ts\" \"npm run dev\"",
-    "dev:electron": "concurrently \"tsx server.ts\" \"npm run dev\" \"electron . --no-sandbox\"",
+    "dev:full": "npm run dev",
+    "dev:electron": "concurrently \"npm run dev\" \"electron . --no-sandbox\"",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
