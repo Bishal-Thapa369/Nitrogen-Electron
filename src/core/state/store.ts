@@ -431,39 +431,26 @@ export const useStore = create<EditorState>((set, get) => ({
     }
 
     if (anySuccess) {
-      // 1. Identify all involved paths for Blacklist Sanitization
+      // Clean Deletion Rule: Explicitly unmark all destination paths 
+      // so they can be seen even if background deletion is still running.
       const destPaths = sourcePaths.map(sp => {
           const name = sp.split('/').pop() || '';
           return destDir + (destDir.endsWith('/') ? '' : '/') + name;
       });
-      
-      // 2. Atomic Sync: Unmark both Source and Destination from Delete Buffer
-      // This ensures that "Alive" data always wins over any background "Dead" state.
-      await window.electronAPI.unmarkForDeletionBulk([...sourcePaths, ...destPaths]);
+      await window.electronAPI.unmarkForDeletionBulk(destPaths);
 
-      // 3. Dual-Sided Refresh: Clear "Zombies" from C++ internal tree
-      const uniqueSourceParents = Array.from(new Set(sourcePaths.map(sp => getParentPath(sp))));
-      
-      // Refresh all source parents in the C++ backend
-      for (const srcParent of uniqueSourceParents) {
-          await window.electronAPI.refreshDirectory(srcParent);
-      }
-      
-      // Refresh the destination parent in the C++ backend
       const refreshedDest = await window.electronAPI.refreshDirectory(destDir);
       
       set((state) => {
         let newTree = state.fileTree;
         if (!newTree) return state;
         
-        // Update the JS tree for each source folder involved
         if (type === 'cut') {
-          for (const sp of sourcePaths) {
-              newTree = removeTreeNode(newTree, sp);
+          for (const sourcePath of sourcePaths) {
+            newTree = removeTreeNode(newTree, sourcePath);
           }
         }
 
-        // Final sync of the destination folder branch
         if (refreshedDest) {
           newTree = updateTreeNode(newTree, destDir, refreshedDest);
         }
