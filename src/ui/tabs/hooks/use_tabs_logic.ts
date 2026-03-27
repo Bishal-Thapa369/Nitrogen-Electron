@@ -4,42 +4,34 @@ import { useCallback } from 'react';
 /**
  * Tab state management and side effects
  */
-export const useTabsLogic = (groupId?: string) => {
+export const useTabsLogic = () => {
   const { 
-    editorGroups,
-    activeGroupId,
+    openTabs, 
+    activeFilePath, 
     closeFile, 
     setActiveFile, 
     setActiveFileContent,
     closeAllFiles,
     closeOtherFiles,
-    splitGroup,
-    closeGroup,
-    setActiveGroup
+    toggleSplitScreen,
+    isSplitScreen
   } = useStore();
 
-  const currentGroup = editorGroups.find(g => g.id === (groupId || activeGroupId)) || editorGroups[0];
-  const { tabs: openTabs, activeFilePath } = currentGroup;
-
   const handleTabClick = useCallback(async (tab: { path: string; name: string }) => {
-    if (activeFilePath === tab.path && activeGroupId === currentGroup.id) return;
-    
-    // Set focused group first
-    setActiveGroup(currentGroup.id);
-    setActiveFile(tab.path, currentGroup.id);
-
+    if (activeFilePath === tab.path) return;
+    setActiveFile(tab.path);
     try {
       const content = await window.electronAPI.readFile(tab.path);
       if (content !== null) setActiveFileContent(content);
     } catch (err) {
       console.error('Nitrogen Logic: Failed to switch tab content', err);
     }
-  }, [activeFilePath, activeGroupId, currentGroup.id, setActiveFile, setActiveFileContent, setActiveGroup]);
+  }, [activeFilePath, setActiveFile, setActiveFileContent]);
 
   const handleCloseTab = useCallback((path: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    closeFile(path, currentGroup.id);
-  }, [closeFile, currentGroup.id]);
+    closeFile(path);
+  }, [closeFile]);
 
   const switchToPreviousTab = useCallback(() => {
     if (openTabs.length < 2) return;
@@ -58,16 +50,13 @@ export const useTabsLogic = (groupId?: string) => {
   return {
     openTabs,
     activeFilePath,
-    activeGroupId,
-    currentGroupId: currentGroup.id,
+    isSplitScreen,
     handleTabClick,
     handleCloseTab,
     switchToPreviousTab,
     switchToNextTab,
     closeAllFiles,
     closeOtherFiles,
-    splitGroup,
-    closeGroup,
-    setActiveGroup
+    toggleSplitScreen
   };
 };
