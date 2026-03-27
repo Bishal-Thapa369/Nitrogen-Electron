@@ -12,7 +12,7 @@ export const useEditorLogic = () => {
     activeFilePath, 
     activeFileContent, 
     theme, 
-    isSplitScreen,
+    splitCount,
     setCursorPosition 
   } = useStore();
   
@@ -48,6 +48,6 @@ export const useEditorLogic = () => {
     editorTheme,
     handleEditorDidMount,
     editorRef,
-    isSplitScreen
+    splitCount
   };
 };

@@ -13,8 +13,9 @@ export const useTabsLogic = () => {
     setActiveFileContent,
     closeAllFiles,
     closeOtherFiles,
-    toggleSplitScreen,
-    isSplitScreen
+    addSplit,
+    removeSplit,
+    splitCount
   } = useStore();
 
   const handleTabClick = useCallback(async (tab: { path: string; name: string }) => {
@@ -50,13 +51,14 @@ export const useTabsLogic = () => {
   return {
     openTabs,
     activeFilePath,
-    isSplitScreen,
+    splitCount,
     handleTabClick,
     handleCloseTab,
     switchToPreviousTab,
     switchToNextTab,
     closeAllFiles,
     closeOtherFiles,
-    toggleSplitScreen
+    addSplit,
+    removeSplit
   };
 };

@@ -28,7 +28,8 @@ interface EditorState {
   isSidebarOpen: boolean;
   cursorPosition: { line: number; column: number };
   autoSave: boolean;
-  isSplitScreen: boolean;
+  splitCount: number;
+
 
 
   // Actions
@@ -46,8 +47,10 @@ interface EditorState {
   toggleSidebar: () => void;
   setCursorPosition: (line: number, column: number) => void;
   toggleAutoSave: () => void;
-  toggleSplitScreen: () => void;
+  addSplit: () => void;
+  removeSplit: () => void;
   closeOtherFiles: (filePath: string) => void;
+
   closeAllFiles: () => void;
 
 
@@ -142,7 +145,8 @@ export const useStore = create<EditorState>((set, get) => ({
   isSidebarOpen: true,
   cursorPosition: { line: 1, column: 1 },
   autoSave: true,
-  isSplitScreen: false,
+  splitCount: 1,
+
 
 
   setFileTree: (tree, rootPath) => {
@@ -205,8 +209,10 @@ export const useStore = create<EditorState>((set, get) => ({
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   setCursorPosition: (line, column) => set({ cursorPosition: { line, column } }),
   toggleAutoSave: () => set((state) => ({ autoSave: !state.autoSave })),
-  toggleSplitScreen: () => set((state) => ({ isSplitScreen: !state.isSplitScreen })),
+  addSplit: () => set((state) => ({ splitCount: Math.min(state.splitCount + 1, 8) })), // Limit to 8 for sanity
+  removeSplit: () => set((state) => ({ splitCount: Math.max(state.splitCount - 1, 1) })),
   closeOtherFiles: (filePath) => {
+
     const { openTabs } = get();
     const otherTabs = openTabs.filter(t => t.path !== filePath);
     // Physically close them one by one to trigger deletion logic if needed
