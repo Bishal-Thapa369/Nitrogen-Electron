@@ -12,7 +12,8 @@ Nitrogen isn't an "Electron app" in the traditional sense. It follows a strict *
 
 - **Industrial-Grade Deletion Engine:** Mass-deletion powered by a **C++ Vector Engine** and Electron **Micro-Ventilation**, achieving **1ms UI-Hide** and **Snapshot Isolation** for zero-stutter project operations (even with 5k+ files).
 - **Industrial Logic Consistency:** Guaranteed 1:1 disk-to-UI parity across complex file operation sequences (Copy → Cut → Paste → Undo). Optimized the state management and C++ cache synchronization to eliminate "Ghost Files" and display corruption in the sidebar.
-- **Atomic Modular Architecture:** Industrial-grade modularity for both Sidebar and Terminal. Logic and UI are split into specialized atomic hooks and components, ensuring a **"Hallucination-Proof"** and high-performance frontend with 100% functional parity.
+- **Infinite Multi-Group Splits:** Industrial-grade N-group editor architecture with proximity-based **Smart Focus** and automatic continuity buffers. Supports as many side-by-side splits as the hardware can handle with zero-lag UI transitions.
+- **Atomic Modular Architecture:** Industrial-grade modularity for both Sidebar, Terminal, and Editor. Logic and UI are split into specialized atomic hooks and components, ensuring a **"Hallucination-Proof"** and high-performance frontend with 100% functional parity.
 - **High-Performance Native Terminal:** Integrated terminal powered by `libvterm` and Linux `forkpty`. Features a dedicated background I/O thread, full Unicode support (Nepali, Japanese, Emojis), and a premium neon-inspired color palette.
 - **Dual-Module Build Architecture:** Independent native compilation targets (`nitrogen_file_explorer.node` and `nitrogen_terminal.node`) to ensure architectural isolation and protection of finalized core modules.
 - **High-Performance Virtualization:** Custom O(1) virtualized tree engine supporting 100k+ files with cinematic motion blur and 144Hz scroll-fluidity.
@@ -23,7 +24,7 @@ Nitrogen isn't an "Electron app" in the traditional sense. It follows a strict *
 - **CodeWeaver Aesthetics:** A premium, glassmorphic UI designed for deep focus and visual excellence.
 
 ### 🏁 Phase 3: The C++ Piece Table Core
-The Native Terminal, the Atomic Sidebar, and the Industrial Deletion Engine are now fully integrated power pillars. We have achieved **Absolute Logic Consistency** and industrial performance. We are now aggressively moving into **Phase 3: High-Performance Piece Table Core Integration** to offload all text manipulation logic directly to the C++ engine.
+The Native Terminal, the Atomic Sidebar, the Industrial Deletion Engine, and the Infinite Split Engine are now fully integrated power pillars. We have achieved **Absolute Logic Consistency** and industrial performance. We are now aggressively moving into **Phase 3: High-Performance Piece Table Core Integration** to offload all text manipulation logic directly to the C++ engine.
 
 
 ## 🛠️ Technology Stack
@@ -70,7 +71,7 @@ Nitrogen follows a strict architectural protocol documented in the `RULES/` dire
 ---
 
 ### 📅 Current Milestone
-**Milestone 35: Industrial Explorer + Terminal Completion** — Ultra-fast C++ Explorer and the Modular Native Terminal are now 100% complete and working with **Absolute Logic Consistency**. All performance-critical components are optimized for zero-lag responsiveness and "hallucination-proof" modularity. Now aggressively transitioning into **Phase 3: High-Performance Piece Table Editor Core Integration**.
+**Milestone 40: Infinite Multi-Pane Editor & Smart Focus Architecture** — Replaced the legacy dual-pane system with a high-performance N-group architecture. Implemented spatial proximity focus rules and clone-on-split logic to achieve 1:1 functional parity with professional IDEs like VS Code. The modular engine is now 100% stable. Now aggressively transitioning into **Phase 3: High-Performance Piece Table Editor Core Integration**.
 
 
 ---
