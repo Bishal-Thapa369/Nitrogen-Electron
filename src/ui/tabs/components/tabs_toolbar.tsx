@@ -1,114 +1,127 @@
 import React, { useState } from 'react';
-import { Columns, ChevronLeft, ChevronRight, MoreHorizontal, Trash2, XCircle } from 'lucide-react';
+import { 
+  Columns, 
+  ChevronLeft, 
+  ChevronRight, 
+  MoreHorizontal,
+} from 'lucide-react';
 import { useTabsLogic } from '../hooks/use_tabs_logic';
-import { motion, AnimatePresence } from 'motion/react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { cn } from '../../utils/cn';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+interface TabsToolbarProps {
+  groupId: string;
 }
 
 /**
  * Premium Tab Control Toolbar
  * Logic: [Split Screen] [Prev Tab] [Next Tab] [More Options]
  */
-export const TabsToolbar: React.FC = () => {
+export const TabsToolbar: React.FC<TabsToolbarProps> = ({ groupId }) => {
   const { 
+    openTabs,
     switchToPreviousTab, 
     switchToNextTab, 
     closeAllFiles, 
     closeOtherFiles, 
-    toggleSplitScreen,
-    isSplitScreen,
+    splitGroup,
+    closeGroup,
+    activeGroupId,
     activeFilePath
-  } = useTabsLogic();
+  } = useTabsLogic(groupId);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isActiveGroup = activeGroupId === groupId;
 
   return (
     <div className="flex items-center gap-0.5 px-2 h-full border-l border-[var(--color-border-subtle)] bg-transparent relative">
-      {/* 1. Toggle Split Screen */}
-      <button 
-        onClick={toggleSplitScreen}
-        title="Split Editor"
-        className={cn(
-          "p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)]",
-          isSplitScreen ? "text-[var(--color-accent-primary)] bg-[var(--color-accent-primary)]/10" : "text-[var(--color-text-tertiary)]"
-        )}
-      >
-        <Columns size={16} strokeWidth={2} />
-      </button>
-
-      {/* 2. Switch to Previous Tab */}
-      <button 
-        onClick={switchToPreviousTab}
-        title="Previous Tab"
-        className="p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]"
-      >
-        <ChevronLeft size={16} strokeWidth={2} />
-      </button>
-
-      {/* 3. Switch to Next Tab */}
-      <button 
-        onClick={switchToNextTab}
-        title="Next Tab"
-        className="p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]"
-      >
-        <ChevronRight size={16} strokeWidth={2} />
-      </button>
-
-      {/* 4. More Options Menu */}
-      <div className="relative">
-        <button 
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          title="More Actions"
+      {/* 1. Split Screen Toggle (Only for active group) */}
+      {isActiveGroup && (
+        <button
+          onClick={() => splitGroup(groupId)}
           className={cn(
-            "p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)]",
-            isMenuOpen ? "text-[var(--color-text-primary)] bg-[var(--color-bg-hover)]" : "text-[var(--color-text-tertiary)]"
+            "p-1.5 rounded-md transition-all duration-200 group-btn",
+            "hover:bg-[var(--color-tab-hover)] text-[var(--color-text-dim)] hover:text-[var(--color-text-primary)]"
           )}
+          title="Split Editor (Side by Side)"
         >
-          <MoreHorizontal size={16} strokeWidth={2} />
+          <Columns size={15} />
+        </button>
+      )}
+
+      {/* 2. Navigation Control (Only for active group and if tabs exist) */}
+      {isActiveGroup && openTabs.length > 0 && (
+        <>
+          <button
+            onClick={switchToPreviousTab}
+            className="p-1.5 rounded-md hover:bg-[var(--color-tab-hover)] text-[var(--color-text-dim)] hover:text-[var(--color-text-primary)] transition-colors"
+            title="Previous Tab"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            onClick={switchToNextTab}
+            className="p-1.5 rounded-md hover:bg-[var(--color-tab-hover)] text-[var(--color-text-dim)] hover:text-[var(--color-text-primary)] transition-colors"
+            title="Next Tab"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </>
+      )}
+
+      {/* 3. More Actions Dropdown (Always present) */}
+      <div className="relative">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className={cn(
+            "p-1.5 rounded-md transition-all duration-200",
+            isMenuOpen 
+              ? "bg-[var(--color-tab-hover)] text-[var(--color-text-primary)]" 
+              : "hover:bg-[var(--color-tab-hover)] text-[var(--color-text-dim)] hover:text-[var(--color-text-primary)]"
+          )}
+          title="More Actions"
+        >
+          <MoreHorizontal size={16} />
         </button>
 
-        <AnimatePresence>
-          {isMenuOpen && (
-            <>
-              <div 
-                className="fixed inset-0 z-40" 
-                onClick={() => setIsMenuOpen(false)} 
-              />
-              <motion.div
-                initial={{ opacity: 0, y: 5, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-                className="absolute right-0 mt-2 w-48 py-1 rounded-lg bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[0_10px_30px_-5px_rgba(0,0,0,0.5)] z-50 overflow-hidden backdrop-blur-xl"
+        {/* Glassmorphic Dropdown Menu */}
+        {isMenuOpen && (
+          <>
+            <div 
+              className="fixed inset-0 z-40" 
+              onClick={() => setIsMenuOpen(false)}
+            />
+            <div className="absolute right-0 mt-2 w-48 py-1.5 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-bg-tertiary)]/90 backdrop-blur-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+              <button
+                onClick={() => {
+                  if (activeFilePath) closeOtherFiles(activeFilePath, groupId);
+                  setIsMenuOpen(false);
+                }}
+                className="w-full flex items-center px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-blue)]/10 hover:text-[var(--color-accent-blue)] transition-colors"
               >
-                <button 
-                  onClick={() => {
-                    if (activeFilePath) closeOtherFiles(activeFilePath);
-                    setIsMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors"
-                >
-                  <Trash2 size={14} className="opacity-70" />
-                  Close Other Tabs
-                </button>
-                <button 
-                  onClick={() => {
-                    closeAllFiles();
-                    setIsMenuOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-[12px] text-red-400 hover:bg-red-400/10 transition-colors"
-                >
-                  <XCircle size={14} className="opacity-70" />
-                  Close All Tabs
-                </button>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+                Close Other Tabs
+              </button>
+              <button
+                onClick={() => {
+                  closeAllFiles(groupId);
+                  setIsMenuOpen(false);
+                }}
+                className="w-full flex items-center px-3 py-2 text-[13px] text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-blue)]/10 hover:text-[var(--color-accent-blue)] transition-colors"
+              >
+                Close All Tabs
+              </button>
+              <div className="my-1 border-t border-[var(--color-border-subtle)]" />
+              <button
+                onClick={() => {
+                  closeGroup(groupId);
+                  setIsMenuOpen(false);
+                }}
+                className="w-full flex items-center px-3 py-2 text-[13px] text-red-400 hover:bg-red-400/10 transition-colors"
+              >
+                Close Split
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

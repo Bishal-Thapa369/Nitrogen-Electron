@@ -18,17 +18,20 @@ interface EditorState {
   expandedFolders: string[];  // Set of expanded directory paths
   extensionMap: Record<number, string>; // Maps C++ typeId to string extension
 
-  // Editor State
-  openTabs: { path: string; name: string }[];
-  activeFilePath: string | null;
-  activeFileContent: string | null;
+  // Editor State (Multi-Group Architecture)
+  editorGroups: {
+    id: string;
+    tabs: { path: string; name: string }[];
+    activeFilePath: string | null;
+  }[];
+  activeGroupId: string;
+  activeFileContent: string | null; // Shared content cache for the last focused document
   theme: 'vs-dark' | 'light';
   isCommandPaletteOpen: boolean;
   isTerminalOpen: boolean;
   isSidebarOpen: boolean;
   cursorPosition: { line: number; column: number };
   autoSave: boolean;
-  isSplitScreen: boolean;
 
 
   // Actions
@@ -36,19 +39,24 @@ interface EditorState {
   updateExtensionMap: () => Promise<void>;
   updateNode: (path: string, updatedNode: FileTreeNode) => Promise<void>;
   toggleFolder: (dirPath: string) => void;
+  
+  // Tab Group Actions
   openFile: (filePath: string, fileName: string) => void;
-  closeFile: (filePath: string) => void;
-  setActiveFile: (filePath: string | null) => void;
+  closeFile: (filePath: string, groupId?: string) => void;
+  setActiveFile: (filePath: string | null, groupId?: string) => void;
   setActiveFileContent: (content: string | null) => void;
+  setActiveGroup: (groupId: string) => void;
+  splitGroup: (sourceGroupId: string) => void;
+  closeGroup: (groupId: string) => void;
+  
   setTheme: (theme: 'vs-dark' | 'light') => void;
   toggleCommandPalette: () => void;
   toggleTerminal: () => void;
   toggleSidebar: () => void;
   setCursorPosition: (line: number, column: number) => void;
   toggleAutoSave: () => void;
-  toggleSplitScreen: () => void;
-  closeOtherFiles: (filePath: string) => void;
-  closeAllFiles: () => void;
+  closeOtherFiles: (filePath: string, groupId?: string) => void;
+  closeAllFiles: (groupId?: string) => void;
 
 
   // Explorer Selection & Clipboard
@@ -133,8 +141,8 @@ export const useStore = create<EditorState>((set, get) => ({
   rootPath: null,
   expandedFolders: [],
   extensionMap: {},
-  openTabs: [],
-  activeFilePath: null,
+  editorGroups: [{ id: 'main', tabs: [], activeFilePath: null }],
+  activeGroupId: 'main',
   activeFileContent: null,
   theme: (localStorage.getItem('theme') as any) || 'vs-dark',
   isCommandPaletteOpen: false,
@@ -142,8 +150,6 @@ export const useStore = create<EditorState>((set, get) => ({
   isSidebarOpen: true,
   cursorPosition: { line: 1, column: 1 },
   autoSave: true,
-  isSplitScreen: false,
-
 
   setFileTree: (tree, rootPath) => {
     set({ fileTree: tree, rootPath, expandedFolders: tree ? [tree.path] : [] });
@@ -174,26 +180,91 @@ export const useStore = create<EditorState>((set, get) => ({
     }));
   },
 
+  setActiveGroup: (groupId) => set({ activeGroupId: groupId }),
+
   openFile: (filePath, fileName) => {
-    const { openTabs } = get();
-    if (!openTabs.find(t => t.path === filePath)) {
-      set({ openTabs: [...openTabs, { path: filePath, name: fileName }] });
-    }
-    set({ activeFilePath: filePath });
+    const { editorGroups, activeGroupId } = get();
+    const updatedGroups = editorGroups.map(group => {
+      if (group.id === activeGroupId) {
+        const alreadyOpen = group.tabs.find(t => t.path === filePath);
+        return {
+          ...group,
+          tabs: alreadyOpen ? group.tabs : [...group.tabs, { path: filePath, name: fileName }],
+          activeFilePath: filePath
+        };
+      }
+      return group;
+    });
+    set({ editorGroups: updatedGroups });
   },
 
-  closeFile: (filePath) => {
-    const { openTabs, activeFilePath } = get();
-    const newTabs = openTabs.filter((t) => t.path !== filePath);
-    let newActive = activeFilePath;
-    if (activeFilePath === filePath) {
-      newActive = newTabs.length > 0 ? newTabs[newTabs.length - 1].path : null;
-    }
-    set({ openTabs: newTabs, activeFilePath: newActive, activeFileContent: newActive === null ? null : get().activeFileContent });
+  closeFile: (filePath, groupId) => {
+    const { editorGroups, activeGroupId } = get();
+    const targetGroupId = groupId || activeGroupId;
+    
+    const updatedGroups = editorGroups.map(group => {
+      if (group.id === targetGroupId) {
+        const newTabs = group.tabs.filter(t => t.path !== filePath);
+        let newActive = group.activeFilePath;
+        if (group.activeFilePath === filePath) {
+          newActive = newTabs.length > 0 ? newTabs[newTabs.length - 1].path : null;
+        }
+        return { ...group, tabs: newTabs, activeFilePath: newActive };
+      }
+      return group;
+    });
+    
+    set({ editorGroups: updatedGroups });
   },
 
-  setActiveFile: (filePath) => set({ activeFilePath: filePath }),
+  setActiveFile: (filePath, groupId) => {
+    const { editorGroups, activeGroupId } = get();
+    const targetGroupId = groupId || activeGroupId;
+    const updatedGroups = editorGroups.map(group => {
+      if (group.id === targetGroupId) {
+        return { ...group, activeFilePath: filePath };
+      }
+      return group;
+    });
+    set({ editorGroups: updatedGroups, activeGroupId: targetGroupId });
+  },
+
   setActiveFileContent: (content) => set({ activeFileContent: content }),
+
+  splitGroup: (sourceGroupId) => {
+    const { editorGroups } = get();
+    const sourceGroup = editorGroups.find(g => g.id === sourceGroupId);
+    if (!sourceGroup || editorGroups.length >= 8) return;
+
+    const newGroupId = `group-${Date.now()}`;
+    const newGroup = {
+      id: newGroupId,
+      tabs: [...sourceGroup.tabs],
+      activeFilePath: sourceGroup.activeFilePath
+    };
+
+    set({ 
+      editorGroups: [...editorGroups, newGroup],
+      activeGroupId: newGroupId 
+    });
+  },
+
+  closeGroup: (groupId) => {
+    const { editorGroups, activeGroupId } = get();
+    if (editorGroups.length <= 1) {
+       // Just close all files in the last group
+       get().closeAllFiles(groupId);
+       return;
+    }
+
+    const filteredGroups = editorGroups.filter(g => g.id !== groupId);
+    const newActiveId = activeGroupId === groupId ? filteredGroups[filteredGroups.length - 1].id : activeGroupId;
+    
+    set({ 
+      editorGroups: filteredGroups,
+      activeGroupId: newActiveId 
+    });
+  },
 
   setTheme: (theme) => {
     localStorage.setItem('theme', theme);
@@ -205,18 +276,36 @@ export const useStore = create<EditorState>((set, get) => ({
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   setCursorPosition: (line, column) => set({ cursorPosition: { line, column } }),
   toggleAutoSave: () => set((state) => ({ autoSave: !state.autoSave })),
-  toggleSplitScreen: () => set((state) => ({ isSplitScreen: !state.isSplitScreen })),
-  closeOtherFiles: (filePath) => {
-    const { openTabs } = get();
-    const otherTabs = openTabs.filter(t => t.path !== filePath);
-    // Physically close them one by one to trigger deletion logic if needed
-    otherTabs.forEach(t => get().closeFile(t.path));
-    set({ activeFilePath: filePath });
+  
+  closeOtherFiles: (filePath, groupId) => {
+    const { editorGroups, activeGroupId } = get();
+    const targetGroupId = groupId || activeGroupId;
+    const updatedGroups = editorGroups.map(group => {
+      if (group.id === targetGroupId) {
+        return { 
+          ...group, 
+          tabs: group.tabs.filter(t => t.path === filePath),
+          activeFilePath: filePath 
+        };
+      }
+      return group;
+    });
+    set({ editorGroups: updatedGroups });
   },
-  closeAllFiles: () => {
-    const { openTabs } = get();
-    openTabs.forEach(t => get().closeFile(t.path));
-    set({ activeFilePath: null, activeFileContent: null, openTabs: [] });
+
+  closeAllFiles: (groupId) => {
+    const { editorGroups, activeGroupId } = get();
+    const targetGroupId = groupId || activeGroupId;
+    const updatedGroups = editorGroups.map(group => {
+      if (group.id === targetGroupId) {
+        return { ...group, tabs: [], activeFilePath: null };
+      }
+      return group;
+    });
+    set({ 
+      editorGroups: updatedGroups,
+      activeFileContent: targetGroupId === activeGroupId ? null : get().activeFileContent
+    });
   },
 
 
@@ -390,11 +479,13 @@ export const useStore = create<EditorState>((set, get) => ({
       // Native C++ will have blacklisted all paths already
       await get().refreshRoot();
 
-      const { activeFilePath, openTabs } = get();
+      const { editorGroups } = get();
       paths.forEach(p => {
-        if (activeFilePath === p || openTabs.find(t => t.path === p)) {
-            get().closeFile(p);
-        }
+        editorGroups.forEach(group => {
+           if (group.activeFilePath === p || group.tabs.find(t => t.path === p)) {
+              get().closeFile(p, group.id);
+           }
+        });
       });
     }
     return result;

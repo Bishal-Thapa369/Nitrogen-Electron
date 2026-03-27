@@ -3,24 +3,40 @@ import { AnimatePresence } from 'motion/react';
 import { TabItem } from './components/tab_item';
 import { useTabsLogic } from './hooks/use_tabs_logic';
 import { TabsToolbar } from './components/tabs_toolbar';
+import { cn } from '../utils/cn';
 
 /**
  * Nitrogen Tab Orchestrator (Shell)
- * Manages the high-performance horizontal scroll list for open documents.
+ * Now group-aware to support Multi-Pane Split Editing
  */
-export const Tabs: React.FC = () => {
+interface TabsProps {
+  groupId: string;
+}
+
+export const Tabs: React.FC<TabsProps> = ({ groupId }) => {
   const { 
     openTabs, 
     activeFilePath, 
     handleTabClick, 
-    handleCloseTab 
-  } = useTabsLogic();
+    handleCloseTab,
+    activeGroupId,
+    currentGroupId,
+    setActiveGroup
+  } = useTabsLogic(groupId);
 
-  if (openTabs.length === 0) return null;
+  const isActive = activeGroupId === currentGroupId;
 
   return (
-    <div className="flex bg-transparent items-center border-b border-[var(--color-border-subtle)] h-11">
-      <div className="flex-1 flex overflow-x-auto no-scrollbar px-3 py-2 items-center gap-1.5 h-full">
+    <div 
+      className={cn(
+        "flex items-center justify-between w-full h-[41px] border-b transition-colors",
+        isActive 
+          ? "bg-[var(--color-bg-secondary)] border-[var(--color-border-subtle)]" 
+          : "bg-[var(--color-bg-primary)] border-[var(--color-border-subtle)] opacity-80"
+      )}
+      onClick={() => setActiveGroup(currentGroupId)}
+    >
+      <div className="flex-1 flex items-center h-full overflow-x-auto no-scrollbar px-2 gap-1">
         <AnimatePresence initial={false}>
           {openTabs.map((tab) => (
             <TabItem
@@ -34,8 +50,7 @@ export const Tabs: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      {/* Control Toolbar */}
-      <TabsToolbar />
+      <TabsToolbar groupId={currentGroupId} />
     </div>
   );
 };
