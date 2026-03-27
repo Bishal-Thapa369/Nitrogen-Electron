@@ -16,7 +16,7 @@ export const Editor: React.FC = () => {
     editorLanguage, 
     editorTheme, 
     handleEditorDidMount,
-    splitCount
+    isSplitScreen
   } = useEditorLogic();
 
   // Show premium empty state if no file is selected
@@ -54,14 +54,24 @@ export const Editor: React.FC = () => {
 
   return (
     <div className={cn(
-      "h-full w-full overflow-hidden bg-transparent flex gap-[1px] bg-[var(--color-border-subtle)]"
+      "h-full w-full overflow-hidden bg-transparent",
+      isSplitScreen ? "flex gap-[1px] bg-[var(--color-border-subtle)]" : ""
     )}>
-      {Array.from({ length: splitCount }).map((_, index) => (
-        <div 
-          key={index} 
-          className="h-full bg-[var(--color-bg-surface)] overflow-hidden"
-          style={{ width: `${100 / splitCount}%` }}
-        >
+      {/* Primary Editor */}
+      <div className={cn("h-full", isSplitScreen ? "w-1/2 bg-[var(--color-bg-surface)]" : "w-full")}>
+        <MonacoEditor
+          height="100%"
+          language={editorLanguage}
+          theme={editorTheme}
+          value={activeFileContent}
+          onMount={handleEditorDidMount}
+          options={editorOptions}
+        />
+      </div>
+
+      {/* Split Secondary Editor */}
+      {isSplitScreen && (
+        <div className="h-full w-1/2 bg-[var(--color-bg-surface)]">
           <MonacoEditor
             height="100%"
             language={editorLanguage}
@@ -71,7 +81,7 @@ export const Editor: React.FC = () => {
             options={editorOptions}
           />
         </div>
-      ))}
+      )}
     </div>
   );
 };

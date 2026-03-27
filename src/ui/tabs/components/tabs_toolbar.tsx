@@ -19,8 +19,8 @@ export const TabsToolbar: React.FC = () => {
     switchToNextTab, 
     closeAllFiles, 
     closeOtherFiles, 
-    addSplit,
-    splitCount,
+    toggleSplitScreen,
+    isSplitScreen,
     activeFilePath
   } = useTabsLogic();
 
@@ -28,13 +28,13 @@ export const TabsToolbar: React.FC = () => {
 
   return (
     <div className="flex items-center gap-0.5 px-2 h-full border-l border-[var(--color-border-subtle)] bg-transparent relative">
-      {/* 1. Add Editor Split */}
+      {/* 1. Toggle Split Screen */}
       <button 
-        onClick={addSplit}
-        title="Split Editor Right"
+        onClick={toggleSplitScreen}
+        title="Split Editor"
         className={cn(
           "p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)]",
-          splitCount > 1 ? "text-[var(--color-accent-primary)] bg-[var(--color-accent-primary)]/10" : "text-[var(--color-text-tertiary)]"
+          isSplitScreen ? "text-[var(--color-accent-primary)] bg-[var(--color-accent-primary)]/10" : "text-[var(--color-text-tertiary)]"
         )}
       >
         <Columns size={16} strokeWidth={2} />
