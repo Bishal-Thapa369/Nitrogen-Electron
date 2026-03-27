@@ -6,8 +6,13 @@ import { motion, AnimatePresence } from 'motion/react';
 
 
 export const TopBar: React.FC = () => {
-  const { activeFilePath, openTabs, theme, setTheme, autoSave, toggleAutoSave, toggleCommandPalette, setFileTree } = useStore();
-  const activeTab = openTabs.find((t) => t.path === activeFilePath);
+  const { editorGroups, activeGroupId, theme, setTheme, autoSave, toggleAutoSave, toggleCommandPalette, setFileTree } = useStore();
+  
+  const activeGroup = editorGroups.find(g => g.id === activeGroupId) || editorGroups[0];
+  const activeFilePath = activeGroup.activeFilePath;
+  const openTabs = activeGroup.openTabs;
+  
+  const activeTab = openTabs.find((t: any) => t.path === activeFilePath);
   const [fileMenuOpen, setFileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 

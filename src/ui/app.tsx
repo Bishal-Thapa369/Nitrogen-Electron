@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useStore } from '../core/state/store';
 import { Sidebar } from './sidebar/sidebar';
-import { Editor } from './editor/editor';
-import { Tabs } from './tabs/tabs';
+import { EditorGroup } from './editor/editor_group';
 import { StatusBar } from './status_bar/status_bar';
 import { TopBar } from './top_bar/top_bar';
 import { Terminal } from './terminal/terminal';
@@ -17,7 +16,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export default function App() {
-  const { theme, isTerminalOpen, toggleTerminal, isSidebarOpen, toggleSidebar } = useStore();
+  const { theme, isTerminalOpen, toggleTerminal, isSidebarOpen, toggleSidebar, isSplitScreen, editorGroups } = useStore();
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [terminalHeight, setTerminalHeight] = useState(240);
   const isResizing = useRef(false);
@@ -183,14 +182,15 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* Main Content Area & Terminal */}
+        {/* Editor Area (Split Support) */}
         <div className="flex-1 flex flex-col gap-0 overflow-hidden">
-          {/* Editor */}
-          <div className="flex-1 flex flex-col bg-[var(--color-bg-surface)]/90 backdrop-blur-2xl rounded-xl border border-[var(--color-border-subtle)] overflow-hidden shadow-2xl relative">
-            <Tabs />
-            <div className="flex-1 relative overflow-hidden">
-              <Editor />
-            </div>
+          <div className={cn(
+            "flex-1 flex gap-3 overflow-hidden transition-all duration-300",
+            isSplitScreen ? "flex-row" : "flex-col"
+          )}>
+            {editorGroups.map((group) => (
+              <EditorGroup key={group.id} id={group.id} />
+            ))}
           </div>
           
           {/* Terminal */}

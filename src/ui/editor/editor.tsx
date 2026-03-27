@@ -1,5 +1,6 @@
 import React from 'react';
 import MonacoEditor from '@monaco-editor/react';
+import { useStore } from '../../core/state/store';
 import { EmptyEditor } from './components/empty_editor';
 import { useEditorLogic } from './hooks/use_editor_logic';
 import { cn } from '../utils/cn';
@@ -9,19 +10,28 @@ import { cn } from '../utils/cn';
  * The main display layer for text manipulation, offloading all calculation
  * logic to the C++ core while maintaining a premium React/Monaco skin.
  */
-export const Editor: React.FC = () => {
+/**
+ * Nitrogen Editor (Optimized Architectural Shell)
+ */
+export const Editor: React.FC<{ groupId?: string }> = ({ groupId = 'primary' }) => {
   const { 
     activeFilePath, 
     activeFileContent, 
     editorLanguage, 
     editorTheme, 
     handleEditorDidMount,
-    isSplitScreen
-  } = useEditorLogic();
+  } = useEditorLogic(groupId);
+
+  const { setActiveGroup, activeGroupId } = useStore();
+  const isFocused = activeGroupId === groupId;
 
   // Show premium empty state if no file is selected
   if (!activeFilePath || activeFileContent === null) {
-    return <EmptyEditor />;
+    return (
+      <div className="h-full w-full" onClick={() => setActiveGroup(groupId)}>
+        <EmptyEditor />
+      </div>
+    );
   }
 
   const editorOptions = {
@@ -53,35 +63,22 @@ export const Editor: React.FC = () => {
   };
 
   return (
-    <div className={cn(
-      "h-full w-full overflow-hidden bg-transparent",
-      isSplitScreen ? "flex gap-[1px] bg-[var(--color-border-subtle)]" : ""
-    )}>
-      {/* Primary Editor */}
-      <div className={cn("h-full", isSplitScreen ? "w-1/2 bg-[var(--color-bg-surface)]" : "w-full")}>
-        <MonacoEditor
-          height="100%"
-          language={editorLanguage}
-          theme={editorTheme}
-          value={activeFileContent}
-          onMount={handleEditorDidMount}
-          options={editorOptions}
-        />
-      </div>
-
-      {/* Split Secondary Editor */}
-      {isSplitScreen && (
-        <div className="h-full w-1/2 bg-[var(--color-bg-surface)]">
-          <MonacoEditor
-            height="100%"
-            language={editorLanguage}
-            theme={editorTheme}
-            value={activeFileContent}
-            onMount={handleEditorDidMount}
-            options={editorOptions}
-          />
-        </div>
+    <div 
+      className={cn(
+        "h-full w-full overflow-hidden bg-transparent transition-opacity duration-300",
+        !isFocused ? "opacity-90" : "opacity-100"
       )}
+      onClick={() => setActiveGroup(groupId)}
+    >
+      <MonacoEditor
+        height="100%"
+        language={editorLanguage}
+        theme={editorTheme}
+        value={activeFileContent}
+        onMount={handleEditorDidMount}
+        options={editorOptions}
+      />
     </div>
   );
 };
+

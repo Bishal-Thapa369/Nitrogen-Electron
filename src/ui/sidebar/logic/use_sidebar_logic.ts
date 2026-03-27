@@ -14,8 +14,11 @@ export type VirtualRow =
 export const useSidebarLogic = () => {
   const { 
     fileTree, expandedFolders, toggleFolder, setSelectedPath, setSelectedPaths, 
-    selectedPath, selectedPaths, activeFilePath, clipboardItems, refreshRoot
+    selectedPath, selectedPaths, editorGroups, activeGroupId, clipboardItems, refreshRoot
   } = useStore();
+
+  const activeGroup = editorGroups.find(g => g.id === activeGroupId) || editorGroups[0];
+  const activeFilePath = activeGroup.activeFilePath;
   
   // 1. Core State Orchestration
   const [contextMenu, setContextMenu] = useState<{ node: FileTreeNode | null; x: number; y: number } | null>(null);
@@ -45,9 +48,6 @@ export const useSidebarLogic = () => {
   }, [fileTree, expandedFolders]);
 
   // 3. Specialized Logic Hooks
-  const virtualization = useSidebarVirtualization(flattenedVisibleNodes);
-  
-  // Navigation hook needs the flattened nodes for Shift+Click math
   const navigation = useSidebarNavigation({ fileTree, flattenedVisibleNodes });
   
   const creation = useSidebarCreation({

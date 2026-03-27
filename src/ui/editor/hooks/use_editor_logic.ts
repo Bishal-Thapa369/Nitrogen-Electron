@@ -5,16 +5,18 @@ import { useEditorTheme } from './use_editor_theme';
 import { getLanguage } from '../utils/language_map';
 
 /**
- * Main logic orchestrator for the Monaco editor
+ * Main logic orchestrator for the Monaco editor for a specific Group
  */
-export const useEditorLogic = () => {
+export const useEditorLogic = (groupId: string = 'primary') => {
   const { 
-    activeFilePath, 
-    activeFileContent, 
+    editorGroups,
     theme, 
     isSplitScreen,
     setCursorPosition 
   } = useStore();
+
+  const group = editorGroups.find(g => g.id === groupId) || editorGroups[0];
+  const { activeFilePath, activeFileContent } = group;
   
   const editorRef = useRef<any>(null);
   const { defineThemes } = useEditorTheme(editorRef);
@@ -23,20 +25,15 @@ export const useEditorLogic = () => {
     editorRef.current = editor;
     (window as any).monaco = monaco;
 
-    // Define premium themes
     defineThemes(monaco);
-    
-    // Set theme initially
     monaco.editor.setTheme(theme === 'vs-dark' ? 'premium-dark' : theme);
 
-    // Track cursor position
     editor.onDidChangeCursorPosition((e: any) => {
       setCursorPosition(e.position.lineNumber, e.position.column);
     });
 
-    // Potential syntax offloading hook point for Phase 3
-    console.log('Nitrogen Editor Core: Mounted file', activeFilePath);
-  }, [theme, setCursorPosition, activeFilePath, defineThemes]);
+    console.log(`Nitrogen Editor Core [${groupId}]: Mounted`, activeFilePath);
+  }, [theme, setCursorPosition, activeFilePath, defineThemes, groupId]);
 
   const editorLanguage = activeFilePath ? getLanguage(activeFilePath) : 'plaintext';
   const editorTheme = theme === 'vs-dark' ? 'premium-dark' : theme;
@@ -51,3 +48,4 @@ export const useEditorLogic = () => {
     isSplitScreen
   };
 };
+

@@ -10,15 +10,17 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export const CommandPalette: React.FC = () => {
-  const { isCommandPaletteOpen, toggleCommandPalette, setTheme, openTabs, closeFile } = useStore();
+  const { isCommandPaletteOpen, toggleCommandPalette, setTheme, activeGroupId, closeAllFiles } = useStore();
   const [query, setQuery] = useState('');
+
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const commands = [
     { id: 'theme-dark', name: 'Color Theme: Dark (Visual Studio)', action: () => setTheme('vs-dark'), category: 'Theme', icon: <Palette size={14} /> },
     { id: 'theme-light', name: 'Color Theme: Light', action: () => setTheme('light'), category: 'Theme', icon: <Palette size={14} /> },
-    { id: 'close-all', name: 'Close All Editors', action: () => openTabs.forEach(t => closeFile(t.path)), category: 'Editor', icon: <XSquare size={14} /> },
+    { id: 'close-all', name: 'Close All Editors', action: () => closeAllFiles(activeGroupId), category: 'Editor', icon: <XSquare size={14} /> },
   ];
 
   const filteredCommands = commands.filter(c => 

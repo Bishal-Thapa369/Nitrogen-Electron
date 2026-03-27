@@ -11,17 +11,26 @@ export interface FileTreeNode {
   children: FileTreeNode[];
 }
 
+export interface EditorGroup {
+  id: string;
+  openTabs: { path: string; name: string }[];
+  activeFilePath: string | null;
+  activeFileContent: string | null;
+}
+
 interface EditorState {
+
   // File Tree (from C++ backend)
   fileTree: FileTreeNode | null;
   rootPath: string | null;
   expandedFolders: string[];  // Set of expanded directory paths
   extensionMap: Record<number, string>; // Maps C++ typeId to string extension
 
-  // Editor State
-  openTabs: { path: string; name: string }[];
-  activeFilePath: string | null;
-  activeFileContent: string | null;
+  // Editor Groups
+  editorGroups: EditorGroup[];
+  activeGroupId: string;
+  focusHistory: string[]; // Tracks order of group focus for intelligent switching
+
   theme: 'vs-dark' | 'light';
   isCommandPaletteOpen: boolean;
   isTerminalOpen: boolean;
@@ -36,10 +45,12 @@ interface EditorState {
   updateExtensionMap: () => Promise<void>;
   updateNode: (path: string, updatedNode: FileTreeNode) => Promise<void>;
   toggleFolder: (dirPath: string) => void;
-  openFile: (filePath: string, fileName: string) => void;
-  closeFile: (filePath: string) => void;
-  setActiveFile: (filePath: string | null) => void;
-  setActiveFileContent: (content: string | null) => void;
+  openFile: (filePath: string, fileName: string, groupId?: string) => void;
+  closeFile: (filePath: string, groupId?: string) => void;
+  setActiveFile: (filePath: string | null, groupId?: string) => void;
+  setActiveFileContent: (content: string | null, groupId?: string) => void;
+  setActiveGroup: (groupId: string) => void;
+
   setTheme: (theme: 'vs-dark' | 'light') => void;
   toggleCommandPalette: () => void;
   toggleTerminal: () => void;
@@ -47,8 +58,9 @@ interface EditorState {
   setCursorPosition: (line: number, column: number) => void;
   toggleAutoSave: () => void;
   toggleSplitScreen: () => void;
-  closeOtherFiles: (filePath: string) => void;
-  closeAllFiles: () => void;
+  closeOtherFiles: (filePath: string, groupId?: string) => void;
+  closeAllFiles: (groupId?: string) => void;
+
 
 
   // Explorer Selection & Clipboard
@@ -133,9 +145,10 @@ export const useStore = create<EditorState>((set, get) => ({
   rootPath: null,
   expandedFolders: [],
   extensionMap: {},
-  openTabs: [],
-  activeFilePath: null,
-  activeFileContent: null,
+  editorGroups: [{ id: 'primary', openTabs: [], activeFilePath: null, activeFileContent: null }],
+  activeGroupId: 'primary',
+  focusHistory: ['primary'],
+
   theme: (localStorage.getItem('theme') as any) || 'vs-dark',
   isCommandPaletteOpen: false,
   isTerminalOpen: true,
@@ -174,26 +187,95 @@ export const useStore = create<EditorState>((set, get) => ({
     }));
   },
 
-  openFile: (filePath, fileName) => {
-    const { openTabs } = get();
-    if (!openTabs.find(t => t.path === filePath)) {
-      set({ openTabs: [...openTabs, { path: filePath, name: fileName }] });
+  openFile: (filePath, fileName, groupId) => {
+    const state = get();
+    const targetGroupId = groupId || state.activeGroupId;
+    const groups = [...state.editorGroups];
+    const groupIndex = groups.findIndex(g => g.id === targetGroupId);
+    if (groupIndex === -1) return;
+
+    const group = groups[groupIndex];
+    if (!group.openTabs.find(t => t.path === filePath)) {
+      group.openTabs = [...group.openTabs, { path: filePath, name: fileName }];
     }
-    set({ activeFilePath: filePath });
+    group.activeFilePath = filePath;
+    set({ editorGroups: groups, activeGroupId: targetGroupId });
   },
 
-  closeFile: (filePath) => {
-    const { openTabs, activeFilePath } = get();
-    const newTabs = openTabs.filter((t) => t.path !== filePath);
-    let newActive = activeFilePath;
-    if (activeFilePath === filePath) {
+  closeFile: (filePath, groupId) => {
+    const state = get();
+    const targetGroupId = groupId || state.activeGroupId;
+    const groups = [...state.editorGroups];
+    const groupIndex = groups.findIndex(g => g.id === targetGroupId);
+    if (groupIndex === -1) return;
+
+    const group = groups[groupIndex];
+    const newTabs = group.openTabs.filter((t) => t.path !== filePath);
+    let newActive = group.activeFilePath;
+    
+    if (group.activeFilePath === filePath) {
       newActive = newTabs.length > 0 ? newTabs[newTabs.length - 1].path : null;
     }
-    set({ openTabs: newTabs, activeFilePath: newActive, activeFileContent: newActive === null ? null : get().activeFileContent });
+    
+    group.openTabs = newTabs;
+    group.activeFilePath = newActive;
+    group.activeFileContent = newActive === null ? null : group.activeFileContent;
+    
+    // Auto-collapse if no tabs left in a group and there are other groups
+    if (newTabs.length === 0 && groups.length > 1) {
+      const closedIdx = groups.findIndex(g => g.id === targetGroupId);
+      const remainingGroups = groups.filter(g => g.id !== targetGroupId);
+      
+      const leftNeighbor = closedIdx > 0 ? groups[closedIdx - 1] : null;
+      const rightNeighbor = closedIdx < groups.length - 1 ? groups[closedIdx + 1] : null;
+
+      let nextFocusId = remainingGroups[0].id;
+      if (leftNeighbor && !rightNeighbor) {
+        nextFocusId = leftNeighbor.id;
+      } else if (rightNeighbor && !leftNeighbor) {
+        nextFocusId = rightNeighbor.id;
+      } else if (leftNeighbor && rightNeighbor) {
+        const lastLeft = state.focusHistory.lastIndexOf(leftNeighbor.id);
+        const lastRight = state.focusHistory.lastIndexOf(rightNeighbor.id);
+        nextFocusId = lastLeft > lastRight ? leftNeighbor.id : rightNeighbor.id;
+      }
+
+      set({ 
+        isSplitScreen: remainingGroups.length > 1, 
+        editorGroups: remainingGroups, 
+        activeGroupId: nextFocusId,
+        focusHistory: state.focusHistory.filter(id => id !== targetGroupId)
+      });
+      return;
+    }
+
+    set({ editorGroups: groups });
   },
 
-  setActiveFile: (filePath) => set({ activeFilePath: filePath }),
-  setActiveFileContent: (content) => set({ activeFileContent: content }),
+  setActiveFile: (filePath, groupId) => {
+    const state = get();
+    const targetGroupId = groupId || state.activeGroupId;
+    const groups = [...state.editorGroups];
+    const groupIndex = groups.findIndex(g => g.id === targetGroupId);
+    if (groupIndex === -1) return;
+    groups[groupIndex].activeFilePath = filePath;
+    set({ editorGroups: groups, activeGroupId: targetGroupId });
+  },
+
+  setActiveFileContent: (content, groupId) => {
+    const state = get();
+    const targetGroupId = groupId || state.activeGroupId;
+    const groups = [...state.editorGroups];
+    const groupIndex = groups.findIndex(g => g.id === targetGroupId);
+    if (groupIndex === -1) return;
+    groups[groupIndex].activeFileContent = content;
+    set({ editorGroups: groups });
+  },
+
+  setActiveGroup: (groupId) => set((state) => ({ 
+    activeGroupId: groupId,
+    focusHistory: [...state.focusHistory.filter(id => id !== groupId), groupId]
+  })),
 
   setTheme: (theme) => {
     localStorage.setItem('theme', theme);
@@ -205,18 +287,82 @@ export const useStore = create<EditorState>((set, get) => ({
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   setCursorPosition: (line, column) => set({ cursorPosition: { line, column } }),
   toggleAutoSave: () => set((state) => ({ autoSave: !state.autoSave })),
-  toggleSplitScreen: () => set((state) => ({ isSplitScreen: !state.isSplitScreen })),
-  closeOtherFiles: (filePath) => {
-    const { openTabs } = get();
-    const otherTabs = openTabs.filter(t => t.path !== filePath);
-    // Physically close them one by one to trigger deletion logic if needed
-    otherTabs.forEach(t => get().closeFile(t.path));
-    set({ activeFilePath: filePath });
+  toggleSplitScreen: () => {
+    const { editorGroups, activeGroupId } = get();
+    
+    // Entering split mode / Adding more splits
+    const activeGroup = editorGroups.find(g => g.id === activeGroupId) || editorGroups[0];
+    const currentFile = activeGroup.openTabs.find(t => t.path === activeGroup.activeFilePath);
+
+    const newGroupId = `group-${Date.now()}`;
+    const newGroup: EditorGroup = {
+      id: newGroupId,
+      openTabs: currentFile ? [{ ...currentFile }] : [],
+      activeFilePath: activeGroup.activeFilePath,
+      activeFileContent: activeGroup.activeFileContent
+    };
+
+    const newGroups = [...editorGroups, newGroup];
+    set({ 
+      isSplitScreen: true, 
+      editorGroups: newGroups, 
+      activeGroupId: newGroupId,
+      focusHistory: [...get().focusHistory, newGroupId]
+    });
   },
-  closeAllFiles: () => {
-    const { openTabs } = get();
-    openTabs.forEach(t => get().closeFile(t.path));
-    set({ activeFilePath: null, activeFileContent: null, openTabs: [] });
+  closeOtherFiles: (filePath, groupId) => {
+    const state = get();
+    const targetGroupId = groupId || state.activeGroupId;
+    const groups = [...state.editorGroups];
+    const groupIndex = groups.findIndex(g => g.id === targetGroupId);
+    if (groupIndex === -1) return;
+
+    const group = groups[groupIndex];
+    group.openTabs = group.openTabs.filter(t => t.path === filePath);
+    group.activeFilePath = filePath;
+    set({ editorGroups: groups });
+  },
+  closeAllFiles: (groupId) => {
+    const state = get();
+    const targetGroupId = groupId || state.activeGroupId;
+    const groups = [...state.editorGroups];
+    const groupIndex = groups.findIndex(g => g.id === targetGroupId);
+    if (groupIndex === -1) return;
+    
+    const group = groups[groupIndex];
+    group.openTabs = [];
+    group.activeFilePath = null;
+    group.activeFileContent = null;
+    
+    // Auto-collapse if clearing all tabs and there are other groups
+    if (groups.length > 1) {
+      const closedIdx = groups.findIndex(g => g.id === targetGroupId);
+      const remainingGroups = groups.filter(g => g.id !== targetGroupId);
+      
+      const leftNeighbor = closedIdx > 0 ? groups[closedIdx - 1] : null;
+      const rightNeighbor = closedIdx < groups.length - 1 ? groups[closedIdx + 1] : null;
+
+      let nextFocusId = remainingGroups[0].id;
+      if (leftNeighbor && !rightNeighbor) {
+        nextFocusId = leftNeighbor.id;
+      } else if (rightNeighbor && !leftNeighbor) {
+        nextFocusId = rightNeighbor.id;
+      } else if (leftNeighbor && rightNeighbor) {
+        const lastLeft = state.focusHistory.lastIndexOf(leftNeighbor.id);
+        const lastRight = state.focusHistory.lastIndexOf(rightNeighbor.id);
+        nextFocusId = lastLeft > lastRight ? leftNeighbor.id : rightNeighbor.id;
+      }
+
+      set({ 
+        isSplitScreen: remainingGroups.length > 1, 
+        editorGroups: remainingGroups, 
+        activeGroupId: nextFocusId,
+        focusHistory: state.focusHistory.filter(id => id !== targetGroupId)
+      });
+      return;
+    }
+
+    set({ editorGroups: groups });
   },
 
 
@@ -390,10 +536,14 @@ export const useStore = create<EditorState>((set, get) => ({
       // Native C++ will have blacklisted all paths already
       await get().refreshRoot();
 
-      const { activeFilePath, openTabs } = get();
+      const { activeGroupId, editorGroups } = get();
+      const activeGroup = editorGroups.find(g => g.id === activeGroupId);
+      const activeFilePath = activeGroup?.activeFilePath;
+      const openTabs = activeGroup?.openTabs || [];
+
       paths.forEach(p => {
         if (activeFilePath === p || openTabs.find(t => t.path === p)) {
-            get().closeFile(p);
+            get().closeFile(p, activeGroupId);
         }
       });
     }

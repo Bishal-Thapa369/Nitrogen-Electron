@@ -13,7 +13,7 @@ function cn(...inputs: ClassValue[]) {
  * Premium Tab Control Toolbar
  * Logic: [Split Screen] [Prev Tab] [Next Tab] [More Options]
  */
-export const TabsToolbar: React.FC = () => {
+export const TabsToolbar: React.FC<{ groupId?: string }> = ({ groupId = 'primary' }) => {
   const { 
     switchToPreviousTab, 
     switchToNextTab, 
@@ -21,47 +21,63 @@ export const TabsToolbar: React.FC = () => {
     closeOtherFiles, 
     toggleSplitScreen,
     isSplitScreen,
-    activeFilePath
-  } = useTabsLogic();
+    activeFilePath,
+    isFocused
+  } = useTabsLogic(groupId);
+
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <div className="flex items-center gap-0.5 px-2 h-full border-l border-[var(--color-border-subtle)] bg-transparent relative">
-      {/* 1. Toggle Split Screen */}
-      <button 
-        onClick={toggleSplitScreen}
-        title="Split Editor"
-        className={cn(
-          "p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)]",
-          isSplitScreen ? "text-[var(--color-accent-primary)] bg-[var(--color-accent-primary)]/10" : "text-[var(--color-text-tertiary)]"
-        )}
-      >
-        <Columns size={16} strokeWidth={2} />
-      </button>
+      {/* 1-3. Navigation Actions (Visible only on focus) */}
+      {isFocused && (
+        <>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleSplitScreen();
+            }}
+            title="Split Editor"
+            className={cn(
+              "p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)]",
+              isSplitScreen ? "text-[var(--color-accent-primary)] bg-[var(--color-accent-primary)]/10" : "text-[var(--color-text-tertiary)]"
+            )}
+          >
+            <Columns size={16} strokeWidth={2} />
+          </button>
 
-      {/* 2. Switch to Previous Tab */}
-      <button 
-        onClick={switchToPreviousTab}
-        title="Previous Tab"
-        className="p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]"
-      >
-        <ChevronLeft size={16} strokeWidth={2} />
-      </button>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              switchToPreviousTab();
+            }}
+            title="Previous Tab"
+            className="p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]"
+          >
+            <ChevronLeft size={16} strokeWidth={2} />
+          </button>
 
-      {/* 3. Switch to Next Tab */}
-      <button 
-        onClick={switchToNextTab}
-        title="Next Tab"
-        className="p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]"
-      >
-        <ChevronRight size={16} strokeWidth={2} />
-      </button>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              switchToNextTab();
+            }}
+            title="Next Tab"
+            className="p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]"
+          >
+            <ChevronRight size={16} strokeWidth={2} />
+          </button>
+        </>
+      )}
 
-      {/* 4. More Options Menu */}
+      {/* 4. More Options Menu (Always visible) */}
       <div className="relative">
         <button 
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsMenuOpen(!isMenuOpen);
+          }}
           title="More Actions"
           className={cn(
             "p-1.5 rounded-md transition-all duration-200 hover:bg-[var(--color-bg-hover)]",
@@ -76,7 +92,10 @@ export const TabsToolbar: React.FC = () => {
             <>
               <div 
                 className="fixed inset-0 z-40" 
-                onClick={() => setIsMenuOpen(false)} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(false);
+                }} 
               />
               <motion.div
                 initial={{ opacity: 0, y: 5, scale: 0.95 }}
@@ -84,9 +103,24 @@ export const TabsToolbar: React.FC = () => {
                 exit={{ opacity: 0, y: 5, scale: 0.95 }}
                 transition={{ duration: 0.15, ease: "easeOut" }}
                 className="absolute right-0 mt-2 w-48 py-1 rounded-lg bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[0_10px_30px_-5px_rgba(0,0,0,0.5)] z-50 overflow-hidden backdrop-blur-xl"
+                onClick={(e) => e.stopPropagation()}
               >
+                {isSplitScreen && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeAllFiles();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-[12px] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] transition-colors border-b border-[var(--color-border-subtle)]/50"
+                  >
+                    <XCircle size={14} className="opacity-70" />
+                    Close Split
+                  </button>
+                )}
                 <button 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (activeFilePath) closeOtherFiles(activeFilePath);
                     setIsMenuOpen(false);
                   }}
@@ -96,7 +130,8 @@ export const TabsToolbar: React.FC = () => {
                   Close Other Tabs
                 </button>
                 <button 
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     closeAllFiles();
                     setIsMenuOpen(false);
                   }}

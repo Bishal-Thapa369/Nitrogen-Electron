@@ -3,7 +3,10 @@ import { useStore } from '../../core/state/store';
 import { Bell, Check, GitBranch, Terminal as TerminalIcon } from 'lucide-react';
 
 export const StatusBar: React.FC = () => {
-  const { activeFilePath, cursorPosition, toggleTerminal, isTerminalOpen } = useStore();
+  const { editorGroups, activeGroupId, cursorPosition, toggleTerminal, isTerminalOpen } = useStore();
+
+  const activeGroup = editorGroups.find(g => g.id === activeGroupId) || editorGroups[0];
+  const activeFilePath = activeGroup.activeFilePath;
 
   const getLanguageLabel = (filePath: string): string => {
     if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) return 'TypeScript';
