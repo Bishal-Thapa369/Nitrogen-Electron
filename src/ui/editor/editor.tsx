@@ -2,6 +2,7 @@ import React from 'react';
 import MonacoEditor from '@monaco-editor/react';
 import { EmptyEditor } from './components/empty_editor';
 import { useEditorLogic } from './hooks/use_editor_logic';
+import { cn } from '../utils/cn';
 
 /**
  * Nitrogen Editor (Optimized Architectural Shell)
@@ -14,7 +15,8 @@ export const Editor: React.FC = () => {
     activeFileContent, 
     editorLanguage, 
     editorTheme, 
-    handleEditorDidMount 
+    handleEditorDidMount,
+    isSplitScreen
   } = useEditorLogic();
 
   // Show premium empty state if no file is selected
@@ -22,45 +24,64 @@ export const Editor: React.FC = () => {
     return <EmptyEditor />;
   }
 
-  return (
-    <div className="h-full w-full overflow-hidden bg-transparent">
-      <MonacoEditor
-        height="100%"
-        language={editorLanguage}
-        theme={editorTheme}
-        value={activeFileContent}
-        onMount={handleEditorDidMount}
-        options={{
-          minimap: { enabled: true, scale: 0.75, renderCharacters: false },
-          fontSize: 14,
-          fontFamily: 'var(--font-mono)',
-          fontLigatures: true,
-          wordWrap: 'on',
-          automaticLayout: true,
-          scrollBeyondLastLine: false,
-          padding: { top: 24, bottom: 24 },
-          lineNumbers: 'on',
-          renderLineHighlight: 'all',
-          cursorBlinking: 'smooth',
-          cursorSmoothCaretAnimation: 'on',
-          smoothScrolling: true,
-          readOnly: true, // Read-only for Phase 1/2 until C++ Piece Table is functional
-          scrollbar: {
-            vertical: 'visible',
-            horizontal: 'visible',
-            useShadows: false,
-            verticalScrollbarSize: 10,
-            horizontalScrollbarSize: 10,
-          },
-          // Selection styling
-          selectionHighlight: true,
-          links: true,
-          contextmenu: true,
-          mouseWheelZoom: true,
-          // Defaulting quickSuggestions
+  const editorOptions = {
+    minimap: { enabled: true, scale: 0.75, renderCharacters: false },
+    fontSize: 14,
+    fontFamily: 'var(--font-mono)',
+    fontLigatures: true,
+    wordWrap: 'on' as any,
+    automaticLayout: true,
+    scrollBeyondLastLine: false,
+    padding: { top: 24, bottom: 24 },
+    lineNumbers: 'on' as any,
+    renderLineHighlight: 'all' as any,
+    cursorBlinking: 'smooth' as any,
+    cursorSmoothCaretAnimation: 'on' as any,
+    smoothScrolling: true,
+    readOnly: true,
+    scrollbar: {
+      vertical: 'visible' as any,
+      horizontal: 'visible' as any,
+      useShadows: false,
+      verticalScrollbarSize: 10,
+      horizontalScrollbarSize: 10,
+    },
+    selectionHighlight: true,
+    links: true,
+    contextmenu: true,
+    mouseWheelZoom: true,
+  };
 
-        }}
-      />
+  return (
+    <div className={cn(
+      "h-full w-full overflow-hidden bg-transparent",
+      isSplitScreen ? "flex gap-[1px] bg-[var(--color-border-subtle)]" : ""
+    )}>
+      {/* Primary Editor */}
+      <div className={cn("h-full", isSplitScreen ? "w-1/2 bg-[var(--color-bg-surface)]" : "w-full")}>
+        <MonacoEditor
+          height="100%"
+          language={editorLanguage}
+          theme={editorTheme}
+          value={activeFileContent}
+          onMount={handleEditorDidMount}
+          options={editorOptions}
+        />
+      </div>
+
+      {/* Split Secondary Editor */}
+      {isSplitScreen && (
+        <div className="h-full w-1/2 bg-[var(--color-bg-surface)]">
+          <MonacoEditor
+            height="100%"
+            language={editorLanguage}
+            theme={editorTheme}
+            value={activeFileContent}
+            onMount={handleEditorDidMount}
+            options={editorOptions}
+          />
+        </div>
+      )}
     </div>
   );
 };

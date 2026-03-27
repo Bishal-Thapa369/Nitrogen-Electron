@@ -28,6 +28,8 @@ interface EditorState {
   isSidebarOpen: boolean;
   cursorPosition: { line: number; column: number };
   autoSave: boolean;
+  isSplitScreen: boolean;
+
 
   // Actions
   setFileTree: (tree: FileTreeNode | null, rootPath: string | null) => void;
@@ -44,6 +46,10 @@ interface EditorState {
   toggleSidebar: () => void;
   setCursorPosition: (line: number, column: number) => void;
   toggleAutoSave: () => void;
+  toggleSplitScreen: () => void;
+  closeOtherFiles: (filePath: string) => void;
+  closeAllFiles: () => void;
+
 
   // Explorer Selection & Clipboard
   selectedPath: string | null;
@@ -136,6 +142,8 @@ export const useStore = create<EditorState>((set, get) => ({
   isSidebarOpen: true,
   cursorPosition: { line: 1, column: 1 },
   autoSave: true,
+  isSplitScreen: false,
+
 
   setFileTree: (tree, rootPath) => {
     set({ fileTree: tree, rootPath, expandedFolders: tree ? [tree.path] : [] });
@@ -197,6 +205,20 @@ export const useStore = create<EditorState>((set, get) => ({
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   setCursorPosition: (line, column) => set({ cursorPosition: { line, column } }),
   toggleAutoSave: () => set((state) => ({ autoSave: !state.autoSave })),
+  toggleSplitScreen: () => set((state) => ({ isSplitScreen: !state.isSplitScreen })),
+  closeOtherFiles: (filePath) => {
+    const { openTabs } = get();
+    const otherTabs = openTabs.filter(t => t.path !== filePath);
+    // Physically close them one by one to trigger deletion logic if needed
+    otherTabs.forEach(t => get().closeFile(t.path));
+    set({ activeFilePath: filePath });
+  },
+  closeAllFiles: () => {
+    const { openTabs } = get();
+    openTabs.forEach(t => get().closeFile(t.path));
+    set({ activeFilePath: null, activeFileContent: null, openTabs: [] });
+  },
+
 
   // Explorer
   selectedPath: null,

@@ -33,7 +33,7 @@ export const TabItem: React.FC<TabItemProps> = React.memo(({
       exit={{ opacity: 0, scale: 0.9, width: 0, padding: 0, margin: 0 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={cn(
-        "group relative flex items-center min-w-[120px] max-w-[200px] px-3 py-1.5 cursor-pointer text-[12px] select-none transition-all duration-200 rounded-md border overflow-hidden",
+        "group relative flex items-center min-w-fit px-3 py-1.5 cursor-pointer text-[12px] select-none transition-all duration-200 rounded-md border",
         isActive 
           ? "bg-[var(--color-bg-surface)] text-[var(--color-text-primary)] border-[var(--color-border-focus)] shadow-sm z-10" 
           : "bg-transparent text-[var(--color-text-tertiary)] border-transparent hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-secondary)]"
@@ -43,7 +43,7 @@ export const TabItem: React.FC<TabItemProps> = React.memo(({
       <div className="mr-2 z-10 flex items-center justify-center w-4 h-4 text-xs">
         {getFileIcon(tab.name)}
       </div>
-      <span className="flex-1 truncate font-medium z-10">{tab.name}</span>
+      <span className="flex-1 whitespace-nowrap font-medium z-10">{tab.name}</span>
       <button
         onClick={onClose}
         className={cn(

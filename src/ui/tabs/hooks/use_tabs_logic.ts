@@ -10,19 +10,19 @@ export const useTabsLogic = () => {
     activeFilePath, 
     closeFile, 
     setActiveFile, 
-    setActiveFileContent 
+    setActiveFileContent,
+    closeAllFiles,
+    closeOtherFiles,
+    toggleSplitScreen,
+    isSplitScreen
   } = useStore();
 
   const handleTabClick = useCallback(async (tab: { path: string; name: string }) => {
-    // Only switch if it's not already active
     if (activeFilePath === tab.path) return;
-    
     setActiveFile(tab.path);
     try {
       const content = await window.electronAPI.readFile(tab.path);
-      if (content !== null) {
-        setActiveFileContent(content);
-      }
+      if (content !== null) setActiveFileContent(content);
     } catch (err) {
       console.error('Nitrogen Logic: Failed to switch tab content', err);
     }
@@ -33,10 +33,30 @@ export const useTabsLogic = () => {
     closeFile(path);
   }, [closeFile]);
 
+  const switchToPreviousTab = useCallback(() => {
+    if (openTabs.length < 2) return;
+    const currentIndex = openTabs.findIndex(t => t.path === activeFilePath);
+    const prevIndex = (currentIndex - 1 + openTabs.length) % openTabs.length;
+    handleTabClick(openTabs[prevIndex]);
+  }, [openTabs, activeFilePath, handleTabClick]);
+
+  const switchToNextTab = useCallback(() => {
+    if (openTabs.length < 2) return;
+    const currentIndex = openTabs.findIndex(t => t.path === activeFilePath);
+    const nextIndex = (currentIndex + 1) % openTabs.length;
+    handleTabClick(openTabs[nextIndex]);
+  }, [openTabs, activeFilePath, handleTabClick]);
+
   return {
     openTabs,
     activeFilePath,
+    isSplitScreen,
     handleTabClick,
-    handleCloseTab
+    handleCloseTab,
+    switchToPreviousTab,
+    switchToNextTab,
+    closeAllFiles,
+    closeOtherFiles,
+    toggleSplitScreen
   };
 };
