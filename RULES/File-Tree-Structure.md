@@ -46,8 +46,21 @@
     - `use_sidebar_logic.ts`: Connects all sub-hooks to the main Sidebar shell.
 - `src/ui/sidebar/utils/` - Style helpers and icon mapping algorithms.
 - `src/ui/sidebar/context_menu/context_menu.tsx` - Right-click context menu (Rename, Delete, Cut, Copy, Paste, Duplicate).
-- `src/ui/editor/editor.tsx` - Monaco-based core editor rendering surface.
-- `src/ui/tabs/tabs.tsx` - Tab management UI.
+- `src/ui/editor/editor.tsx` - The clean structural orchestrator (Shell) for the Monaco-based text editor.
+- `src/ui/editor/components/` - Atomic UI Components.
+    - `empty_editor.tsx`: Premium "Nitrogen" empty state view (The "N" screen).
+- `src/ui/editor/hooks/` - Specialized Logic Subsystems.
+    - `use_editor_logic.ts`: The orchestrator hook for layout, cursor tracking, and mounting.
+    - `use_editor_theme.ts`: Premium Monaco theme engine for the "Nitrogen" aesthetic.
+- `src/ui/editor/utils/` - Editor utilities.
+    - `language_map.ts`: Extension-to-language mapping algorithm.
+- `src/ui/tabs/tabs.tsx` - The clean structural orchestrator (Shell) for the horizontal document tab list.
+- `src/ui/tabs/components/` - Atomic UI Components.
+    - `tab_item.tsx`: Individual tab component with close logic and active indicators.
+- `src/ui/tabs/hooks/` - Specialized Logic Subsystems.
+    - `use_tabs_logic.ts`: Hook for tab switching, reading file contents, and closing events.
+- `src/ui/tabs/utils/` - Tab utilities.
+    - `tab_icons.tsx`: Specialized file extension to themed-icon mapping.
 - `src/ui/status_bar/status_bar.tsx` - Informational status bar at the bottom.
 - `src/ui/top_bar/top_bar.tsx` - Application control bar at the top.
 - `src/ui/terminal/terminal.tsx` - The clean 40-line structural orchestrator (Shell) for the integrated terminal.
