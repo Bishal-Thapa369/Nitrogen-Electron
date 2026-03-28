@@ -247,7 +247,31 @@
 
 ---
 
-## 🚀 Current Focus (Phase 3: Hybrid Editor Core)
-- **Native Editor Bridge:** Finalizing high-speed C++ file I/O integration to offload heavy lifting from the Electron main process.
-- **Atomic State Sync:** Establishing the synchronization layer between the native backend and the now-modular UI display layer (Monaco/React).
-- **Syntax Highlighting Integration:** Transitioning to high-speed tokenization using native C++ logic for professional IDE performance.
+---
+
+### 41. Universal Search: C++ High-Performance Engine ✅
+- **Multithreaded Search Logic:** Built a C++ `SearchEngine` in `src/core/search/` using a thread pool to scan 100k+ files for query matches in milliseconds.
+- **Filename & Content Matching:** Native backend now scans both directory entries and raw file buffers for high-fidelity project discovery.
+- **State Persistence:** Refactored the UI to persist search results in the global Zustand store, allowing users to switch views or open multiple files from a single query without losing results.
+
+### 42. Global Shortcut Architecture & Command Palette ✅
+- **Centralized Hook:** Extracted all top-level hotkeys into `src/ui/hooks/use_global_shortcuts.ts` to prevent focus collisions across terminal, sidebar, and editor.
+- **Universal Command Palette (`Ctrl+Shift+P`):** Re-mapped the standard IDE command palette shortcut and enhanced its "Escape" listener for a professional UX.
+- **Open Folder Shortcut (`Ctrl+K`):** Standardized global folder access that punches through terminal and editor focus for immediate filesystem re-scoping.
+
+### 43. Linux-Grade Terminal & Clipboard Mechanics ✅
+- **Standard Shortcuts:** Implemented `Ctrl+Shift+C` and `Ctrl+Shift+V` with direct clipboard API fallback for industrial-grade copy/paste.
+- **Smart `Ctrl+C` (SIGINT):** Engineered an intelligent interrupt handler: If text is selected, it **copies** without clearing selection; if no selection, it sends a native **break** signal to the process.
+- **Bracketed Paste Mode:** Routed all clipboard data through the terminal's native `term.paste()` handler, preventing multi-line pastes from executing commands automatically before review.
+
+### 44. Professional Editor Logic: Contextual Persistence ✅
+- **Integrated Save Engine:** Built `use_editor_actions.ts` to bridge Monaco content to the C++ filesystem via `saveFile` and `saveFileAs` native bridges.
+- **History Management:** Mapped `Ctrl+Z` and `Ctrl+Shift+Z / Ctrl+Y` to Monaco's internal undo/redo history stacks.
+- **Global Find (`Ctrl+F`):** Directly hooked the global shortcut into the active editor instance for zero-latency discovery.
+
+---
+
+## 🚀 Current Focus (Phase 3: Hardware-Accelerated Hybrid)
+- **Native Piece-Table Buffer:** Implementing the high-speed C++ chunked storage engine to manage multi-gigabyte files with zero UI latency.
+- **Tree-Sitter Integration:** Transitioning to high-speed native syntax tokenization for professional IDE language support.
+- **Git Integration (O(1)):** Implementing a flyweight-pattern status scanner to detect project changes natively.
