@@ -16,9 +16,17 @@ export interface SearchResult {
   context: string;
 }
 
+export interface Tab {
+  path: string;
+  name: string;
+  isDirty?: boolean;
+  cursorPosition?: { line: number; column: number };
+  viewState?: any; // Monaco's ICodeEditorViewState
+}
+
 export interface EditorGroup {
   id: string;
-  openTabs: { path: string; name: string; isDirty?: boolean }[];
+  openTabs: Tab[];
   activeFilePath: string | null;
   activeFileContent: string | null;
 }
@@ -52,7 +60,12 @@ export interface EditorState {
   isSidebarOpen: boolean;
   cursorPosition: { line: number; column: number };
   autoSave: boolean;
+  isQuickOpenOpen: boolean;
   isSplitScreen: boolean;
+  
+  // God-Mode Navigation & Search Index
+  recentPaths: string[];      // Navigation history (ordered by recency)
+  fullFileIndex: { path: string; name: string }[]; // Flat recursive project index
 
   // Actions
   setFileTree: (tree: FileTreeNode | null, rootPath: string | null) => void;
@@ -65,9 +78,11 @@ export interface EditorState {
   setActiveFileContent: (content: string | null, groupId?: string) => void;
   setFileDirty: (filePath: string, isDirty: boolean, groupId?: string) => void;
   setActiveGroup: (groupId: string) => void;
+  updateTabState: (path: string, tabState: Partial<Tab>, groupId?: string) => void;
 
   setTheme: (theme: 'vs-dark' | 'light') => void;
   toggleCommandPalette: () => void;
+  toggleQuickOpen: () => void;
   toggleTerminal: () => void;
   toggleSidebar: () => void;
   setCursorPosition: (line: number, column: number) => void;
@@ -101,4 +116,6 @@ export interface EditorState {
   refreshRoot: () => Promise<void>;
   pasteNode: () => Promise<{ success: boolean; error?: string } | null>;
   duplicateNode: (path: string) => Promise<{ success: boolean; error?: string }>;
+  setFullFileIndex: (files: { path: string; name: string }[]) => void;
+  addToRecentPaths: (path: string) => void;
 }

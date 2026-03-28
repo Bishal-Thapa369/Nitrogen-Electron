@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tabs } from '../tabs/tabs';
 import { Editor } from './editor';
+import { Breadcrumbs } from './components/breadcrumbs';
 import { useStore } from '../../core/state/store';
 import { cn } from '../utils/cn';
 
@@ -13,8 +14,10 @@ interface EditorGroupProps {
  * It is group-aware and handles its own focus state.
  */
 export const EditorGroup: React.FC<EditorGroupProps> = ({ id }) => {
-  const { activeGroupId, setActiveGroup } = useStore();
+  const { activeGroupId, setActiveGroup, editorGroups } = useStore();
   const isFocused = activeGroupId === id;
+  const group = editorGroups.find(g => g.id === id);
+  const activeFilePath = group?.activeFilePath || null;
 
   return (
     <div 
@@ -25,6 +28,7 @@ export const EditorGroup: React.FC<EditorGroupProps> = ({ id }) => {
       onClick={() => setActiveGroup(id)}
     >
       <Tabs groupId={id} />
+      <Breadcrumbs activeFilePath={activeFilePath} />
       <div className="flex-1 relative overflow-hidden">
         <Editor groupId={id} />
       </div>

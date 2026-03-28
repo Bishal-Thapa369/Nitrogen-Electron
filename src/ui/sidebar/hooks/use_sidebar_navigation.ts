@@ -12,7 +12,7 @@ export const useSidebarNavigation = ({
 }: UseSidebarNavigationProps) => {
   const { 
     toggleFolder, openFile, updateNode, setSelectedPath, setSelectedPaths, 
-    expandedFolders, activeGroupId, setActiveFileContent
+    expandedFolders, setActiveFileContent
   } = useStore();
 
   const findNode = useCallback((path: string, node: FileTreeNode | null = fileTree): FileTreeNode | null => {
@@ -70,17 +70,17 @@ export const useSidebarNavigation = ({
         }
       }
     } else {
-      openFile(node.path, node.name, activeGroupId);
+      openFile(node.path, node.name);
       try {
         const content = await window.electronAPI.readFile(node.path);
         if (content !== null) {
-          setActiveFileContent(content, activeGroupId);
+          setActiveFileContent(content);
         }
       } catch (err) {
         console.error('Failed to read file:', err);
       }
     }
-  }, [flattenedVisibleNodes, expandedFolders, setSelectedPaths, setSelectedPath, toggleFolder, updateNode, openFile, activeGroupId, setActiveFileContent]);
+  }, [flattenedVisibleNodes, expandedFolders, setSelectedPaths, setSelectedPath, toggleFolder, updateNode, openFile, setActiveFileContent]);
 
   return { findNode, handleNodeClick };
 };

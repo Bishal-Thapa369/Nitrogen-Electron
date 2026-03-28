@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveFileAs: (content, defaultPath) => ipcRenderer.invoke('fs-save-as-file', content, defaultPath),
   searchAll: (query, rootPath) => ipcRenderer.invoke('search-all', query, rootPath),
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
+  getAllFiles: (rootPath) => ipcRenderer.invoke('get-all-files', rootPath),
 
   // File Operations (Modular — src/main/ipc/file_operations.js)
   renameItem: (oldPath, newName) => ipcRenderer.invoke('fs-rename', oldPath, newName),

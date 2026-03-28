@@ -23,6 +23,7 @@ export const createEditorSlice: StateCreator<EditorState, [], [], Partial<Editor
 
   openFile: (filePath, fileName, groupId) => {
     const state = get();
+    if (filePath) state.addToRecentPaths(filePath);
     const targetGroupId = groupId || state.activeGroupId;
     const groups = [...state.editorGroups];
     const groupIndex = groups.findIndex(g => g.id === targetGroupId);
@@ -30,7 +31,12 @@ export const createEditorSlice: StateCreator<EditorState, [], [], Partial<Editor
 
     const group = groups[groupIndex];
     if (!group.openTabs.find(t => t.path === filePath)) {
-      group.openTabs = [...group.openTabs, { path: filePath, name: fileName, isDirty: false }];
+      group.openTabs = [...group.openTabs, { 
+        path: filePath, 
+        name: fileName, 
+        isDirty: false,
+        cursorPosition: { line: 1, column: 1 }
+      }];
     }
     group.activeFilePath = filePath;
     set({ editorGroups: groups, activeGroupId: targetGroupId });
@@ -87,6 +93,7 @@ export const createEditorSlice: StateCreator<EditorState, [], [], Partial<Editor
 
   setActiveFile: (filePath, groupId) => {
     const state = get();
+    if (filePath) state.addToRecentPaths(filePath);
     const targetGroupId = groupId || state.activeGroupId;
     const groups = [...state.editorGroups];
     const groupIndex = groups.findIndex(g => g.id === targetGroupId);
@@ -116,6 +123,21 @@ export const createEditorSlice: StateCreator<EditorState, [], [], Partial<Editor
     const tab = group.openTabs.find(t => t.path === filePath);
     if (tab) {
       tab.isDirty = isDirty;
+      set({ editorGroups: groups });
+    }
+  },
+
+  updateTabState: (path, tabState, groupId) => {
+    const state = get();
+    const targetGroupId = groupId || state.activeGroupId;
+    const groups = [...state.editorGroups];
+    const groupIndex = groups.findIndex(g => g.id === targetGroupId);
+    if (groupIndex === -1) return;
+
+    const group = groups[groupIndex];
+    const tabIndex = group.openTabs.findIndex(t => t.path === path);
+    if (tabIndex !== -1) {
+      group.openTabs[tabIndex] = { ...group.openTabs[tabIndex], ...tabState };
       set({ editorGroups: groups });
     }
   },

@@ -1,7 +1,6 @@
 import React, { useCallback, useRef } from 'react';
-import { Search, X, FileText, ChevronRight } from 'lucide-react';
+import { Search, X, FileText } from 'lucide-react';
 import { useStore } from '../../../core/state/store';
-import { cn } from '../../utils/cn';
 
 interface SearchResult {
   path: string;
@@ -12,7 +11,7 @@ interface SearchResult {
 
 export const SearchPanel: React.FC = () => {
   const { 
-    rootPath, openFile, selectedPaths, activeGroupId, setActiveFileContent,
+    rootPath, openFile, selectedPaths, setActiveFileContent,
     searchQuery, setSearchQuery, searchResults, setSearchResults, isSearching, setIsSearching 
   } = useStore();
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -49,11 +48,11 @@ export const SearchPanel: React.FC = () => {
   };
 
   const handleResultClick = async (result: SearchResult) => {
-    openFile(result.path, result.fileName, activeGroupId);
+    openFile(result.path, result.fileName);
     try {
       const content = await window.electronAPI.readFile(result.path);
       if (content !== null) {
-        setActiveFileContent(content, activeGroupId);
+        setActiveFileContent(content);
       }
     } catch (err) {
       console.error('Failed to read file:', err);

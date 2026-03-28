@@ -25,6 +25,12 @@ export const useGlobalShortcuts = () => {
         useStore.getState().toggleCommandPalette();
       }
 
+      // Quick Open: Ctrl+P
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        useStore.getState().toggleQuickOpen();
+      }
+
       // Open Folder Dialog: Ctrl+K
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
@@ -36,6 +42,13 @@ export const useGlobalShortcuts = () => {
         } catch (err) {
           console.error('Failed to open folder:', err);
         }
+      }
+
+      // Close overlays: Escape
+      if (e.key === 'Escape') {
+        const state = useStore.getState();
+        if (state.isQuickOpenOpen) state.toggleQuickOpen();
+        if (state.isCommandPaletteOpen) state.toggleCommandPalette();
       }
     };
 

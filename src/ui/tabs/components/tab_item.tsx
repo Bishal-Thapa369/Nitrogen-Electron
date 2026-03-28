@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -26,8 +26,21 @@ export const TabItem: React.FC<TabItemProps> = React.memo(({
   onClick, 
   onClose 
 }) => {
+  const tabRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isActive && tabRef.current) {
+      tabRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, [isActive]);
+
   return (
     <motion.div
+      ref={tabRef}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9, width: 0, padding: 0, margin: 0 }}

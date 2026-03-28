@@ -26,11 +26,21 @@ export const useTabsLogic = (groupId: string = 'primary') => {
     setActiveGroup(groupId);
     if (activeFilePath === tab.path) return;
     
-    // Set loading or similar if needed
+    // Switch the active path immediately
     setActiveFile(tab.path, groupId);
+
+    // Check if Monaco already has this model to avoid redundant I/O
+    const monaco = (window as any).monaco;
+    if (monaco) {
+      const model = monaco.editor.getModel(monaco.Uri.file(tab.path));
+      if (model) return; // Optimization: useEditorLogic will handle model swapping
+    }
+    
     try {
       const content = await window.electronAPI.readFile(tab.path);
-      if (content !== null) setActiveFileContent(content, groupId);
+      if (content !== null) {
+        setActiveFileContent(content, groupId);
+      }
     } catch (err) {
       console.error('Nitrogen Logic: Failed to switch tab content', err);
     }

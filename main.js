@@ -132,6 +132,40 @@ function createWindow() {
       });
     });
   });
+
+  // ---- Global File Indexing (Ctrl+P God-Mode) ----
+  ipcMain.handle('get-all-files', async (_event, rootPath) => {
+    const fs = await import('fs/promises');
+    const files = [];
+
+    const walk = async (dir) => {
+      try {
+          const list = await fs.readdir(dir, { withFileTypes: true });
+          for (const item of list) {
+              const res = path.resolve(dir, item.name);
+              // Standard ignore patterns for high performance indexing
+              if (item.name === 'node_modules' || item.name === '.git' || item.name === 'dist' || item.name === 'build' || item.name === '.vite') {
+                  continue;
+              }
+              if (item.isDirectory()) {
+                  await walk(res);
+              } else {
+                  files.push({ 
+                      path: res.replace(/\\/g, '/'), 
+                      name: item.name 
+                  });
+              }
+          }
+      } catch (err) {
+          console.error(`Index walk error for ${dir}:`, err);
+      }
+    };
+
+    if (rootPath) {
+        await walk(rootPath);
+    }
+    return files;
+  });
 }
 
 app.whenReady().then(() => {

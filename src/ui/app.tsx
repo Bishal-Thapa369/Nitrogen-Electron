@@ -6,6 +6,7 @@ import { StatusBar } from './status_bar/status_bar';
 import { TopBar } from './top_bar/top_bar';
 import { Terminal } from './terminal/terminal';
 import { CommandPalette } from './command_palette/command_palette';
+import { QuickOpen } from './commands/quick_open';
 import { useGlobalShortcuts } from './hooks/use_global_shortcuts';
 import { Files, Search, GitBranch, Play, Settings, UserCircle, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -236,6 +237,7 @@ export default function App() {
 
       <StatusBar />
       <CommandPalette />
+      <QuickOpen />
     </div>
   );
 }
