@@ -10,9 +10,6 @@ export const createUISlice: StateCreator<EditorState, [], [], Partial<EditorStat
   autoSave: true,
   recentPaths: [],
   fullFileIndex: [],
-  
-  terminals: [],
-  activeTerminalId: null,
 
   setTheme: (theme) => {
     localStorage.setItem('theme', theme);
@@ -38,38 +35,4 @@ export const createUISlice: StateCreator<EditorState, [], [], Partial<EditorStat
     
     return { recentPaths: nextPaths };
   }),
-
-  // Multi-Tab Terminal Actions
-  addTerminal: (id, name = 'bash') => set((state) => ({
-    terminals: [...state.terminals, { id, name, isProcessing: false }],
-    activeTerminalId: id,
-    isTerminalOpen: true, // Ensure panel is open when a new terminal spawns
-  })),
-
-  removeTerminal: (id) => set((state) => {
-    const newTerminals = state.terminals.filter(t => t.id !== id);
-    let newActiveId = state.activeTerminalId;
-
-    if (state.activeTerminalId === id) {
-      // If we close the active terminal, pick the last available one
-      newActiveId = newTerminals.length > 0 ? newTerminals[newTerminals.length - 1].id : null;
-    }
-
-    return { 
-      terminals: newTerminals,
-      activeTerminalId: newActiveId,
-      // Optional: Auto-close terminal panel if last terminal is removed
-      // isTerminalOpen: newTerminals.length > 0 ? state.isTerminalOpen : false 
-    };
-  }),
-
-  setActiveTerminal: (id) => set({ activeTerminalId: id }),
-
-  renameTerminal: (id, newName) => set((state) => ({
-    terminals: state.terminals.map(t => t.id === id ? { ...t, name: newName } : t)
-  })),
-
-  setTerminalProcessing: (id, isProcessing) => set((state) => ({
-    terminals: state.terminals.map(t => t.id === id ? { ...t, isProcessing } : t)
-  })),
 });

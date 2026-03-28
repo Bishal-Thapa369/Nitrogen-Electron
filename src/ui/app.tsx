@@ -209,28 +209,29 @@ export default function App() {
           </div>
           
           {/* Terminal */}
-          <>
-            {/* Terminal Resizer (In Gap) - Only show if open */}
-            <div 
-              onMouseDown={isTerminalOpen ? startTerminalResizing : undefined}
-              className={`flex-shrink-0 flex flex-col items-center justify-center group z-30 transition-all duration-300 ${isTerminalOpen ? 'h-3 cursor-row-resize' : 'h-0 overflow-hidden'} ${isTerminalResizingActive ? 'active-resize' : ''}`}
-            >
-              <div className={`h-[2px] w-full rounded-full transition-all duration-300 ${isTerminalResizingActive ? 'bg-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.6)]' : 'bg-transparent group-hover:bg-[var(--color-accent-primary)] shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`} />
-            </div>
-            
-            <motion.div 
-              initial={false}
-              animate={{ 
-                height: isTerminalOpen ? terminalHeight : 0, 
-                opacity: isTerminalOpen ? 1 : 0,
-                marginBottom: isTerminalOpen ? 0 : 0
-              }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className={`flex-shrink-0 relative flex flex-col bg-[var(--color-bg-panel)]/60 backdrop-blur-2xl rounded-xl border ${isTerminalOpen ? 'border-[var(--color-border-subtle)]' : 'border-transparent'} overflow-hidden shadow-2xl`}
-            >
-              <Terminal />
-            </motion.div>
-          </>
+          <AnimatePresence>
+            {isTerminalOpen && (
+              <>
+                {/* Terminal Resizer (In Gap) */}
+                <div 
+                  onMouseDown={startTerminalResizing}
+                  className={`h-3 flex-shrink-0 flex flex-col items-center justify-center cursor-row-resize group z-30 ${isTerminalResizingActive ? 'active-resize' : ''}`}
+                >
+                  <div className={`h-[2px] w-full rounded-full transition-all duration-300 ${isTerminalResizingActive ? 'bg-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.6)]' : 'bg-transparent group-hover:bg-[var(--color-accent-primary)] shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`} />
+                </div>
+                
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: terminalHeight, opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex-shrink-0 relative flex flex-col bg-[var(--color-bg-panel)]/60 backdrop-blur-2xl rounded-xl border border-[var(--color-border-subtle)] overflow-hidden shadow-2xl"
+                >
+                  <Terminal />
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
