@@ -16,6 +16,12 @@ export interface SearchResult {
   context: string;
 }
 
+export interface TerminalTab {
+  id: string;
+  title: string;
+  sessionId: number | null;
+}
+
 export interface Tab {
   path: string;
   name: string;
@@ -66,6 +72,11 @@ export interface EditorState {
   // God-Mode Navigation & Search Index
   recentPaths: string[];      // Navigation history (ordered by recency)
   fullFileIndex: { path: string; name: string }[]; // Flat recursive project index
+
+  // Terminal Multi-Tab State
+  terminals: TerminalTab[];
+  activeTerminalId: string | null;
+  isTerminalMaximized: boolean;
 
   // Actions
   setFileTree: (tree: FileTreeNode | null, rootPath: string | null) => void;
@@ -118,4 +129,13 @@ export interface EditorState {
   duplicateNode: (path: string) => Promise<{ success: boolean; error?: string }>;
   setFullFileIndex: (files: { path: string; name: string }[]) => void;
   addToRecentPaths: (path: string) => void;
+
+  // Terminal Actions
+  addTerminal: (title?: string) => void;
+  removeTerminal: (id: string) => void;
+  setActiveTerminal: (id: string) => void;
+  updateTerminalTitle: (id: string, title: string) => void;
+  setTerminalSessionId: (terminalId: string, sessionId: number) => void;
+  killAllTerminals: () => void;
+  toggleTerminalMaximize: () => void;
 }

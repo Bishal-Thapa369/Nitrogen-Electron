@@ -34,9 +34,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Terminal (High-Performance C++ Backend)
   terminalSpawn: (rows, cols) => ipcRenderer.invoke('terminal:spawn', rows, cols),
-  terminalWrite: (data) => ipcRenderer.send('terminal:write', data),
-  terminalResize: (rows, cols) => ipcRenderer.send('terminal:resize', rows, cols),
-  onTerminalData: (callback) => ipcRenderer.on('terminal:data', (_event, data) => callback(data)),
+  terminalWrite: (sid, data) => ipcRenderer.send('terminal:write', sid, data),
+  terminalResize: (sid, rows, cols) => ipcRenderer.send('terminal:resize', sid, rows, cols),
+  onTerminalData: (callback) => ipcRenderer.on('terminal:data', (_event, sid, data) => callback(sid, data)),
 
   // Piece Table (C++ Chunk-Based Editor Engine)
   pieceTableLoadFile: (filePath) => ipcRenderer.invoke('piece-table:load-file', filePath),

@@ -10,6 +10,9 @@ export const createUISlice: StateCreator<EditorState, [], [], Partial<EditorStat
   autoSave: true,
   recentPaths: [],
   fullFileIndex: [],
+  terminals: [{ id: 'term-default', title: 'bash', sessionId: null }],
+  activeTerminalId: 'term-default',
+  isTerminalMaximized: false,
 
   setTheme: (theme) => {
     localStorage.setItem('theme', theme);
@@ -18,7 +21,19 @@ export const createUISlice: StateCreator<EditorState, [], [], Partial<EditorStat
 
   toggleCommandPalette: () => set((state) => ({ isCommandPaletteOpen: !state.isCommandPaletteOpen })),
   toggleQuickOpen: () => set((state) => ({ isQuickOpenOpen: !state.isQuickOpenOpen })),
-  toggleTerminal: () => set((state) => ({ isTerminalOpen: !state.isTerminalOpen })),
+  toggleTerminal: () => set((state) => {
+    const nextOpen = !state.isTerminalOpen;
+    // If opening the panel and no terminals exist (e.g. after a Kill All), spawn one
+    if (nextOpen && state.terminals.length === 0) {
+      const id = `term-${Math.random().toString(36).substr(2, 9)}`;
+      return { 
+        isTerminalOpen: nextOpen,
+        terminals: [{ id, title: 'bash', sessionId: null }],
+        activeTerminalId: id
+      };
+    }
+    return { isTerminalOpen: nextOpen };
+  }),
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   toggleAutoSave: () => set((state) => ({ autoSave: !state.autoSave })),
   
@@ -35,4 +50,45 @@ export const createUISlice: StateCreator<EditorState, [], [], Partial<EditorStat
     
     return { recentPaths: nextPaths };
   }),
+
+  addTerminal: (title) => set((state) => {
+    const id = `term-${Date.now()}`;
+    const newTerminal = { id, title: title || 'bash', sessionId: null };
+    return {
+      terminals: [...state.terminals, newTerminal],
+      activeTerminalId: id
+    };
+  }),
+
+  removeTerminal: (id) => set((state) => {
+    const nextTerminals = state.terminals.filter((t) => t.id !== id);
+    let nextActiveId = state.activeTerminalId;
+    
+    if (state.activeTerminalId === id) {
+      nextActiveId = nextTerminals.length > 0 ? nextTerminals[nextTerminals.length - 1].id : null;
+    }
+    
+    return {
+      terminals: nextTerminals,
+      activeTerminalId: nextActiveId
+    };
+  }),
+
+  setActiveTerminal: (id) => set({ activeTerminalId: id }),
+
+  updateTerminalTitle: (id, title) => set((state) => ({
+    terminals: state.terminals.map((t) => (t.id === id ? { ...t, title } : t))
+  })),
+
+  setTerminalSessionId: (id, sessionId) => set((state) => ({
+    terminals: state.terminals.map((t) => (t.id === id ? { ...t, sessionId } : t))
+  })),
+
+  killAllTerminals: () => set({
+    terminals: [],
+    activeTerminalId: null,
+    isTerminalOpen: false
+  }),
+
+  toggleTerminalMaximize: () => set((state) => ({ isTerminalMaximized: !state.isTerminalMaximized })),
 });

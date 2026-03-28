@@ -32,10 +32,10 @@ interface Window {
 
     // Terminal (High-Performance C++ Backend)
     terminalSpawn: (rows: number, cols: number) => Promise<number>;
-    terminalWrite: (data: string) => void;
-    terminalResize: (rows: number, cols: number) => void;
+    terminalWrite: (sid: number, data: string) => void;
+    terminalResize: (sid: number, rows: number, cols: number) => void;
     terminalKill: (id: number) => void;
-    onTerminalData: (callback: (data: string) => void) => void;
+    onTerminalData: (callback: (sid: number, data: string) => void) => void;
   };
 }
 

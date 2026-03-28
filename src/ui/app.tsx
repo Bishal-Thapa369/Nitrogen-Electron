@@ -20,7 +20,8 @@ function cn(...inputs: ClassValue[]) {
 export default function App() {
   const { 
     theme, isTerminalOpen, isSidebarOpen, toggleSidebar, 
-    isSplitScreen, editorGroups, sidebarView, setSidebarView 
+    isSplitScreen, editorGroups, sidebarView, setSidebarView,
+    isTerminalMaximized
   } = useStore();
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [terminalHeight, setTerminalHeight] = useState(240);
@@ -108,66 +109,68 @@ export default function App() {
       
       <div className="flex-1 flex overflow-hidden p-3 gap-0">
         {/* Activity Bar */}
-        <div className="w-8 flex flex-col items-center py-4 space-y-4 text-[var(--color-text-tertiary)] select-none z-10 mr-3">
-          <div 
-            onClick={() => {
-              if (sidebarView === 'explorer' && isSidebarOpen) {
-                toggleSidebar();
-              } else {
-                setSidebarView('explorer');
-                if (!isSidebarOpen) toggleSidebar();
-              }
-            }}
-            className={cn(
-              "p-1 rounded-md cursor-pointer transition-all duration-200 shadow-sm",
-              isSidebarOpen && sidebarView === 'explorer'
-                ? "bg-[var(--color-accent-glow)] text-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
-                : "hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
-            )}
-          >
-            <Files size={24} strokeWidth={2} />
+        {!isTerminalMaximized && (
+          <div className="w-8 flex flex-col items-center py-4 space-y-4 text-[var(--color-text-tertiary)] select-none z-10 mr-3">
+            <div 
+              onClick={() => {
+                if (sidebarView === 'explorer' && isSidebarOpen) {
+                  toggleSidebar();
+                } else {
+                  setSidebarView('explorer');
+                  if (!isSidebarOpen) toggleSidebar();
+                }
+              }}
+              className={cn(
+                "p-1 rounded-md cursor-pointer transition-all duration-200 shadow-sm",
+                isSidebarOpen && sidebarView === 'explorer'
+                  ? "bg-[var(--color-accent-glow)] text-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
+                  : "hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+              )}
+            >
+              <Files size={24} strokeWidth={2} />
+            </div>
+            <div 
+              onClick={() => {
+                if (sidebarView === 'search' && isSidebarOpen) {
+                  toggleSidebar();
+                } else {
+                  setSidebarView('search');
+                  if (!isSidebarOpen) toggleSidebar();
+                }
+              }}
+              className={cn(
+                "p-1 rounded-md cursor-pointer transition-all duration-200 shadow-sm",
+                isSidebarOpen && sidebarView === 'search'
+                  ? "bg-[var(--color-accent-glow)] text-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
+                  : "hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+              )}
+            >
+              <Search size={24} strokeWidth={2} />
+            </div>
+            <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
+              <GitBranch size={24} strokeWidth={2} />
+            </div>
+            <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
+              <Play size={24} strokeWidth={2} />
+            </div>
+            <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
+              <Package size={24} strokeWidth={2} />
+            </div>
+            
+            <div className="flex-1"></div>
+            
+            <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
+              <UserCircle size={24} strokeWidth={2} />
+            </div>
+            <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
+              <Settings size={24} strokeWidth={2} />
+            </div>
           </div>
-          <div 
-            onClick={() => {
-              if (sidebarView === 'search' && isSidebarOpen) {
-                toggleSidebar();
-              } else {
-                setSidebarView('search');
-                if (!isSidebarOpen) toggleSidebar();
-              }
-            }}
-            className={cn(
-              "p-1 rounded-md cursor-pointer transition-all duration-200 shadow-sm",
-              isSidebarOpen && sidebarView === 'search'
-                ? "bg-[var(--color-accent-glow)] text-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
-                : "hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
-            )}
-          >
-            <Search size={24} strokeWidth={2} />
-          </div>
-          <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
-            <GitBranch size={24} strokeWidth={2} />
-          </div>
-          <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
-            <Play size={24} strokeWidth={2} />
-          </div>
-          <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
-            <Package size={24} strokeWidth={2} />
-          </div>
-          
-          <div className="flex-1"></div>
-          
-          <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
-            <UserCircle size={24} strokeWidth={2} />
-          </div>
-          <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
-            <Settings size={24} strokeWidth={2} />
-          </div>
-        </div>
+        )}
 
         {/* Sidebar Group with Cinematic Animation */}
         <AnimatePresence initial={false}>
-          {isSidebarOpen && (
+          {isSidebarOpen && !isTerminalMaximized && (
             <motion.div 
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: sidebarWidth + 12, opacity: 1 }}
@@ -203,39 +206,45 @@ export default function App() {
             "flex-1 flex gap-3 overflow-hidden transition-all duration-300",
             isSplitScreen ? "flex-row" : "flex-col"
           )}>
-            {editorGroups.map((group) => (
+            {!isTerminalMaximized && editorGroups.map((group) => (
               <EditorGroup key={group.id} id={group.id} />
             ))}
           </div>
           
-          {/* Terminal */}
-          <AnimatePresence>
-            {isTerminalOpen && (
-              <>
-                {/* Terminal Resizer (In Gap) */}
-                <div 
-                  onMouseDown={startTerminalResizing}
-                  className={`h-3 flex-shrink-0 flex flex-col items-center justify-center cursor-row-resize group z-30 ${isTerminalResizingActive ? 'active-resize' : ''}`}
-                >
-                  <div className={`h-[2px] w-full rounded-full transition-all duration-300 ${isTerminalResizingActive ? 'bg-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.6)]' : 'bg-transparent group-hover:bg-[var(--color-accent-primary)] shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`} />
-                </div>
-                
-                <motion.div 
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: terminalHeight, opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex-shrink-0 relative flex flex-col bg-[var(--color-bg-panel)]/60 backdrop-blur-2xl rounded-xl border border-[var(--color-border-subtle)] overflow-hidden shadow-2xl"
-                >
-                  <Terminal />
-                </motion.div>
-              </>
+          {/* Terminal (Persistent Mount for Background Processes) */}
+          <>
+            {/* Terminal Resizer (In Gap) */}
+            {!isTerminalMaximized && isTerminalOpen && (
+              <div 
+                onMouseDown={startTerminalResizing}
+                className={`h-3 flex-shrink-0 flex flex-col items-center justify-center cursor-row-resize group z-30 ${isTerminalResizingActive ? 'active-resize' : ''}`}
+              >
+                <div className={`h-[2px] w-full rounded-full transition-all duration-300 ${isTerminalResizingActive ? 'bg-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.6)]' : 'bg-transparent group-hover:bg-[var(--color-accent-primary)] shadow-[0_0_10px_rgba(59,130,246,0)] group-hover:shadow-[0_0_10px_rgba(59,130,246,0.5)]'}`} />
+              </div>
             )}
-          </AnimatePresence>
+            
+            <motion.div 
+              initial={false}
+              animate={{ 
+                height: isTerminalOpen ? (isTerminalMaximized ? '100%' : terminalHeight) : 0, 
+                opacity: isTerminalOpen ? 1 : 0,
+                // Automatically delay 'none' until the exit animation completes
+                display: isTerminalOpen ? 'flex' : 'none' 
+              }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className={cn(
+                "flex-shrink-0 relative flex-col bg-[var(--color-bg-panel)]/60 backdrop-blur-2xl border border-[var(--color-border-subtle)] overflow-hidden shadow-2xl",
+                isTerminalMaximized ? "rounded-none h-full w-full" : "rounded-xl",
+                !isTerminalOpen && "border-none"
+              )}
+            >
+              <Terminal />
+            </motion.div>
+          </>
         </div>
       </div>
 
-      <StatusBar />
+      {!isTerminalMaximized && <StatusBar />}
       <CommandPalette />
       <QuickOpen />
     </div>

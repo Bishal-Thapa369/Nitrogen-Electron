@@ -47,25 +47,24 @@ function createWindow() {
   ipcMain.on('window-close', () => win.close());
 
   // ---- Terminal IPC ----
-  let terminalSessionId = -1;
-
+  // No longer using single terminalSessionId, but routing via IDs returned by spawn
   ipcMain.handle('terminal:spawn', (_event, rows, cols) => {
     const shell = process.env.SHELL || '/bin/bash';
-    terminalSessionId = terminalNative.spawn(rows, cols, shell, (data) => {
-      win.webContents.send('terminal:data', data);
+    const sid = terminalNative.spawn(rows, cols, shell, (data) => {
+      win.webContents.send('terminal:data', sid, data);
     });
-    return terminalSessionId;
+    return sid;
   });
 
-  ipcMain.on('terminal:write', (_event, data) => {
-    if (terminalSessionId !== -1) {
-      terminalNative.write(terminalSessionId, data);
+  ipcMain.on('terminal:write', (_event, sid, data) => {
+    if (sid !== undefined && sid !== -1) {
+      terminalNative.write(sid, data);
     }
   });
 
-  ipcMain.on('terminal:resize', (_event, rows, cols) => {
-    if (terminalSessionId !== -1) {
-      terminalNative.resize(terminalSessionId, rows, cols);
+  ipcMain.on('terminal:resize', (_event, sid, rows, cols) => {
+    if (sid !== undefined && sid !== -1) {
+      terminalNative.resize(sid, rows, cols);
     }
   });
 

@@ -23,7 +23,7 @@ export const Sidebar: React.FC = () => {
     refreshRoot, toggleFolder, setSelectedPath, setSelectedPaths
   } = useSidebarLogic();
 
-  const { sidebarView, setSidebarView, focusContext, setFocusContext } = useStore();
+  const { sidebarView, focusContext, setFocusContext } = useStore();
 
   const handleOpenFolder = async () => {
     try {
