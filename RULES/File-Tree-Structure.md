@@ -19,11 +19,11 @@
 - `tsconfig.json` / `tsconfig.node.json` - TypeScript configuration for frontend and build tools.
 - `vite.config.ts` - React build and development server configuration.
 - `index.html` - Entrance for the Chromium-based UI.
-- `main.js` - Electron Main process entry point; orchestrates native C++ runtime and bridge.
-- `preload.cjs` - Electron Preload security layer; exposes high-performance IPC methods to the frontend.
+- `main.js` - Electron Main process entry point; orchestrates native C++ runtime, session management, and PTY bridging.
+- `preload.cjs` - Electron Preload security layer; exposes high-performance IPC methods to the frontend including terminal session control.
 - `public/` - Static assets like `vite.svg` and `tauri.svg` served to the Chromium UI.
 - `src/assets/` - Internal React assets like `react.svg`.
-- `CMakeLists.txt` - CMake configuration for building the high-speed C++ native modules (bridges).
+- `CMakeLists.txt` - CMake configuration for building the high-speed C++ native modules (File Explorer, Terminal, Search).
 - `.gitignore` - Standard filters for ignoring build artifacts, caches, and node_modules.
 
 ## 📂 src/core/ (The C++ Engine & State Context)
@@ -42,9 +42,9 @@
 
 ### 📂 state/
 - `store.ts` - Main Zustand state orchestrator that merges atomic slices into a single source of truth.
-- `types.ts` - Central repository for all shared TypeScript interfaces (Tabs, Explorer, Search results).
+- `types.ts` - Central repository for all shared TypeScript interfaces (Tabs, Explorer, Search results, Concurrent Terminal sessions).
 - `utils/tree_helpers.ts` - Utility functions for recursive tree updates and path transformations.
-- `slices/ui_slice.ts` - Handles global UI toggles, terminal visibility, and theme state.
+- `slices/ui_slice.ts` - Handles global UI toggles, terminal visibility/maximization, and theme state.
 - `slices/editor_slice.ts` - Manages multi-group editor state, tabs, active filenames, and search queries.
 - `slices/explorer_slice.ts` - Direct state interface for the C++ file explorer and sidebar interaction.
 
@@ -60,7 +60,7 @@
 ## 📂 src/ui/ (Display & Interface Layer)
 
 ### 📂 hooks/
-- `use_global_shortcuts.ts` - Global event listener that handles application-wide hotkeys like `Ctrl+K` and `Ctrl+Shift+P`.
+- `use_global_shortcuts.ts` - Global event listener that handles application-wide hotkeys like `Ctrl+P`, `Ctrl+Shift+P`, and `Ctrl+K`.
 
 ### 📂 sidebar/
 - `sidebar.tsx` - Shell component orchestrating the transition between Explorer and Search panels.
@@ -80,12 +80,15 @@
 
 ### 📂 editor/
 - `editor.tsx` - Main shell for the text editor, managing groups and individual instances.
-- `editor_group.tsx` - Container for managing split-screen editor views.
+- `editor_group.tsx` - Container for managing split-screen editor views, now including breadcrumb integration.
+- `components/breadcrumbs.tsx` - Premium breadcrumb navigation for deep project location tracking.
+- `components/breadcrumb_popup.tsx` - Contextual popup for navigating sibling files and direct parent hierarchies.
 - `components/empty_editor.tsx` - The premium "N" screen when no document is open.
 - `hooks/use_editor_logic.ts` - Logic for mounting Monaco and managing the editor lifecycle.
 - `hooks/use_editor_theme.ts` - Custom-themed Monaco configuration for the high-end Nitrogen brand.
 - `hooks/use_editor_actions.ts` - Common editor functions (Saving, Formatting, Tab Closing).
 - `hooks/use_editor_shortcuts.ts` - Editor-specific keyboard shortcuts (Split view, Goto line).
+- `hooks/use_breadcrumbs_logic.ts` - Logic for calculating and navigating breadcrumb paths based on active editor state.
 - `utils/language_map.ts` - Algorithmic mapping of file extensions to editor languages.
 
 ### 📂 tabs/
@@ -96,16 +99,24 @@
 - `utils/tab_icons.tsx`: Extension-to-icon mapping for tab visual identities.
 
 ### 📂 terminal/
-- `terminal.tsx` - High-performance XTerm.js terminal wrapper.
-- `components/terminal_header.tsx` - Terminal control bar for clearing, maximizing, and closing.
-- `hooks/use_terminal_logic.ts` - Bootstrapper for the XTerm instance and native session link.
-- `hooks/use_terminal_shortcuts.ts` - Linux-style console shortcuts (Ctrl+Shift+C/V, Smart Ctrl+C).
-- `hooks/use_terminal_theme_sync.ts` - Micro-service for keeping terminal colors in sync with global theme.
-- `utils/terminal_themes.ts` - Central color palette for the ANSI terminal output.
+- `terminal.tsx` - Multi-session concurrent terminal wrapper with resizable sidebar and max/min support.
+- `components/terminal_header.tsx` - Control bar for multi-tab management (New, Reset, Maximize, Hide).
+- `components/terminal_instance.tsx` - Individual xterm.js instance bound to a specific C++ PID.
+- `hooks/use_terminal_logic.ts` - State orchestrator for multiple concurrent terminal sessions.
+- `hooks/use_terminal_instance.ts` - Reusable hook for single terminal session lifecycle and data routing.
+- `hooks/use_terminal_shortcuts.ts` - Professional console shortcuts (Ctrl+Shift+C/V, SIGINT vs Copy handler).
+- `hooks/use_terminal_theme_sync.ts` - Utility for ensuring terminal visuals match global editor themes.
+- `utils/terminal_themes.ts` - Central color palette for the ANSI/VT-100 terminal output.
+- `utils/terminal_events.ts` - Global event emitter for cross-tab terminal communication and data routing.
 
 ### 📂 status_bar/ / top_bar/
-- `status_bar.tsx`: Informational footer showing Git status, line counts, and encoding.
+- `status_bar.tsx`: Informational footer showing Git status, line counts, terminal toggles, and encoding.
 - `top_bar.tsx`: Premium window title bar with system menu integration.
+
+### 📂 command_palette / commands /
+- `command_palette/command_palette.tsx`: Universal Command Palette (`Ctrl+Shift+P`) for quick action discovery.
+- `commands/quick_open.tsx`: High-speed Quick Open (`Ctrl+P`) interface for instant filename-based navigation.
+- `commands/hooks/use_quick_open_logic.ts`: Logic for real-time result filtering and project-wide file discovery.
 
 ### 📂 utils/
 - `cn.ts`: Standard Tailwind-merge utility for dynamic CSS classes.
