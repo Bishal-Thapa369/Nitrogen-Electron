@@ -1,15 +1,16 @@
 import React from 'react';
-import { X, Trash2, Maximize2, Minimize2 } from 'lucide-react';
+import { X, Trash2, Maximize2, Minimize2, Plus } from 'lucide-react';
 
 interface TerminalHeaderProps {
   isMaximized: boolean;
   onToggleMaximize: () => void;
   onToggleTerminal: () => void;
-  onClearTerminal: () => void;
+  onAddTerminal: () => void;
+  onKillTerminal: () => void;
 }
 
 export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
-  isMaximized, onToggleMaximize, onToggleTerminal, onClearTerminal
+  isMaximized, onToggleMaximize, onToggleTerminal, onAddTerminal, onKillTerminal
 }) => {
   return (
     <div className="flex items-center justify-between px-5 py-3 bg-transparent border-b border-[var(--color-border-subtle)] select-none">
@@ -21,9 +22,16 @@ export const TerminalHeader: React.FC<TerminalHeaderProps> = ({
       </div>
       <div className="flex items-center space-x-2">
         <button 
-          onClick={onClearTerminal}
+          onClick={onAddTerminal}
           className="p-1.5 hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] rounded-md transition-all duration-200"
-          title="Clear Terminal"
+          title="New Terminal"
+        >
+          <Plus size={14} strokeWidth={2.5} />
+        </button>
+        <button 
+          onClick={onKillTerminal}
+          className="p-1.5 hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] rounded-md transition-all duration-200"
+          title="Kill Terminal"
         >
           <Trash2 size={14} strokeWidth={2.5} />
         </button>

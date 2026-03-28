@@ -47,25 +47,27 @@ function createWindow() {
   ipcMain.on('window-close', () => win.close());
 
   // ---- Terminal IPC ----
-  let terminalSessionId = -1;
 
   ipcMain.handle('terminal:spawn', (_event, rows, cols) => {
     const shell = process.env.SHELL || '/bin/bash';
-    terminalSessionId = terminalNative.spawn(rows, cols, shell, (data) => {
-      win.webContents.send('terminal:data', data);
+    // terminalNative.spawn returns a unique ID for the session
+    const id = terminalNative.spawn(rows, cols, shell, (data) => {
+      win.webContents.send('terminal:data', { id, data });
     });
-    return terminalSessionId;
+    return id;
   });
 
-  ipcMain.on('terminal:write', (_event, data) => {
-    if (terminalSessionId !== -1) {
-      terminalNative.write(terminalSessionId, data);
-    }
+  ipcMain.on('terminal:write', (_event, id, data) => {
+    terminalNative.write(id, data);
   });
 
-  ipcMain.on('terminal:resize', (_event, rows, cols) => {
-    if (terminalSessionId !== -1) {
-      terminalNative.resize(terminalSessionId, rows, cols);
+  ipcMain.on('terminal:resize', (_event, id, rows, cols) => {
+    terminalNative.resize(id, rows, cols);
+  });
+
+  ipcMain.on('terminal:kill', (_event, id) => {
+    if (terminalNative.kill) {
+      terminalNative.kill(id);
     }
   });
 

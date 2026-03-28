@@ -55,6 +55,10 @@ export interface EditorState {
   focusHistory: string[]; // Tracks order of group focus for intelligent switching
 
   theme: 'vs-dark' | 'light';
+  // Terminal Subsystem (Multi-Tab)
+  terminals: { id: string; name: string; isProcessing: boolean }[];
+  activeTerminalId: string | null;
+
   isCommandPaletteOpen: boolean;
   isTerminalOpen: boolean;
   isSidebarOpen: boolean;
@@ -83,7 +87,15 @@ export interface EditorState {
   setTheme: (theme: 'vs-dark' | 'light') => void;
   toggleCommandPalette: () => void;
   toggleQuickOpen: () => void;
+  
+  // Terminal Actions
   toggleTerminal: () => void;
+  addTerminal: (id: string, name?: string) => void;
+  removeTerminal: (id: string) => void;
+  setActiveTerminal: (id: string) => void;
+  renameTerminal: (id: string, newName: string) => void;
+  setTerminalProcessing: (id: string, isProcessing: boolean) => void;
+
   toggleSidebar: () => void;
   setCursorPosition: (line: number, column: number) => void;
   toggleAutoSave: () => void;
