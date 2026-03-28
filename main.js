@@ -21,6 +21,10 @@ function createWindow() {
     backgroundColor: '#000000',
     frame: false, // Frameless window for custom TopBar
     titleBarStyle: 'hidden',
+    resizable: true,
+    minWidth: 800,
+    minHeight: 600,
+    hasShadow: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
