@@ -7,6 +7,12 @@ export const createEditorSlice: StateCreator<EditorState, [], [], Partial<Editor
   focusHistory: ['primary'],
   isSplitScreen: false,
   cursorPosition: { line: 1, column: 1 },
+  focusContext: 'editor',
+  sidebarView: 'explorer',
+  
+  searchQuery: '',
+  searchResults: [],
+  isSearching: false,
 
   setCursorPosition: (line, column) => set({ cursorPosition: { line, column } }),
 
@@ -24,7 +30,7 @@ export const createEditorSlice: StateCreator<EditorState, [], [], Partial<Editor
 
     const group = groups[groupIndex];
     if (!group.openTabs.find(t => t.path === filePath)) {
-      group.openTabs = [...group.openTabs, { path: filePath, name: fileName }];
+      group.openTabs = [...group.openTabs, { path: filePath, name: fileName, isDirty: false }];
     }
     group.activeFilePath = filePath;
     set({ editorGroups: groups, activeGroupId: targetGroupId });
@@ -47,7 +53,6 @@ export const createEditorSlice: StateCreator<EditorState, [], [], Partial<Editor
     
     group.openTabs = newTabs;
     group.activeFilePath = newActive;
-    group.activeFileContent = newActive === null ? null : group.activeFileContent;
     
     // Auto-collapse if no tabs left in a group and there are other groups
     if (newTabs.length === 0 && groups.length > 1) {
@@ -98,6 +103,21 @@ export const createEditorSlice: StateCreator<EditorState, [], [], Partial<Editor
     if (groupIndex === -1) return;
     groups[groupIndex].activeFileContent = content;
     set({ editorGroups: groups });
+  },
+
+  setFileDirty: (filePath, isDirty, groupId) => {
+    const state = get();
+    const targetGroupId = groupId || state.activeGroupId;
+    const groups = [...state.editorGroups];
+    const groupIndex = groups.findIndex(g => g.id === targetGroupId);
+    if (groupIndex === -1) return;
+    
+    const group = groups[groupIndex];
+    const tab = group.openTabs.find(t => t.path === filePath);
+    if (tab) {
+      tab.isDirty = isDirty;
+      set({ editorGroups: groups });
+    }
   },
 
   toggleSplitScreen: () => {
@@ -177,4 +197,12 @@ export const createEditorSlice: StateCreator<EditorState, [], [], Partial<Editor
 
     set({ editorGroups: groups });
   },
+
+  setFocusContext: (context) => set({ focusContext: context }),
+
+  setSidebarView: (view) => set({ sidebarView: view }),
+
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  setSearchResults: (results) => set({ searchResults: results }),
+  setIsSearching: (isSearching) => set({ isSearching }),
 });

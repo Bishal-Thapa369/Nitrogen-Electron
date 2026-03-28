@@ -3,6 +3,7 @@ import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { useStore } from '../../../core/state/store';
 import { getTerminalTheme } from '../utils/terminal_themes';
+import { setupTerminalShortcuts } from './use_terminal_shortcuts';
 
 export const useTerminalLogic = () => {
   const { isTerminalOpen, theme } = useStore();
@@ -33,6 +34,9 @@ export const useTerminalLogic = () => {
 
       xtermRef.current = term;
       fitAddonRef.current = fitAddon;
+
+      // Initialize all terminal shortcuts (Linux styles + Global Bypasses)
+      setupTerminalShortcuts(term);
 
       const initTerminal = async () => {
         const { rows, cols } = term;

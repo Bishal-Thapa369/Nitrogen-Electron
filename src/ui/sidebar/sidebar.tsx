@@ -11,6 +11,7 @@ import { StickyRoot } from './components/sticky_root';
 import { NewInputRow } from './components/new_input_row';
 import { EmptySidebar } from './components/empty_sidebar';
 import { SidebarFooter } from './components/sidebar_footer';
+import { SearchPanel } from './components/search_panel';
 
 export const Sidebar: React.FC = () => {
   const { 
@@ -21,6 +22,8 @@ export const Sidebar: React.FC = () => {
     visibleItems, totalHeight, startIndex,
     refreshRoot, toggleFolder, setSelectedPath, setSelectedPaths
   } = useSidebarLogic();
+
+  const { sidebarView, setSidebarView, focusContext, setFocusContext } = useStore();
 
   const handleOpenFolder = async () => {
     try {
@@ -33,8 +36,22 @@ export const Sidebar: React.FC = () => {
     }
   };
 
+  if (sidebarView === 'search') {
+    return (
+      <div 
+        className="h-full bg-[var(--color-bg-panel)]/80 backdrop-blur-xl text-[var(--color-text-secondary)] flex flex-col select-none border-r border-[var(--color-border-subtle)]"
+        onClick={() => setFocusContext('sidebar')}
+      >
+        <SearchPanel />
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full bg-[var(--color-bg-panel)]/80 backdrop-blur-xl text-[var(--color-text-secondary)] flex flex-col select-none border-r border-[var(--color-border-subtle)]">
+    <div 
+      className="h-full bg-[var(--color-bg-panel)]/80 backdrop-blur-xl text-[var(--color-text-secondary)] flex flex-col select-none border-r border-[var(--color-border-subtle)]"
+      onClick={() => setFocusContext('sidebar')}
+    >
       
       <div className="flex-1 flex flex-col group/explorer-section overflow-hidden">
         <SidebarHeader />
@@ -111,6 +128,7 @@ export const Sidebar: React.FC = () => {
                       isSelected={selectedPaths.includes(node.path)}
                       isActive={activeFilePath === node.path}
                       isCutTarget={clipboardItems?.type === 'cut' && clipboardItems.paths.includes(node.path)}
+                      isSidebarFocused={focusContext === 'sidebar'}
                       onClick={handleNodeClick} onContextMenu={handleContextMenu} getIconByType={getIconByType}
                     />
                   );

@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import { registerFileOperations } from './src/main/ipc/file_operations.js';
+import { registerFileContentOperations } from './src/main/ipc/file_content.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,6 +12,7 @@ const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
 const fileExplorer = require('./build/Release/nitrogen_file_explorer.node');
 const terminalNative = require('./build/Release/nitrogen_terminal.node');
+const searchNative = require('./build/Release/nitrogen_search.node');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -120,10 +122,21 @@ function createWindow() {
       return null;
     }
   });
+
+  // ---- Universal Search IPC ----
+  ipcMain.handle('search-all', async (_event, query, rootPath) => {
+    return new Promise((resolve, reject) => {
+      searchNative.searchAsync(query, rootPath, (err, results) => {
+        if (err) reject(err);
+        else resolve(results);
+      });
+    });
+  });
 }
 
 app.whenReady().then(() => {
   registerFileOperations(fileExplorer);
+  registerFileContentOperations();
   createWindow();
 });
 

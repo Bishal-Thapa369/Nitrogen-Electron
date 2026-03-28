@@ -63,14 +63,25 @@ target_include_directories(nitrogen_terminal PRIVATE ${NODE_ADDON_API_DIR} ${LIB
 set_target_properties(nitrogen_terminal PROPERTIES PREFIX "" SUFFIX ".node")
 target_link_libraries(nitrogen_terminal ${CMAKE_JS_LIB})
 
+# 3. Search Engine Module (Exhaustive & Multi-threaded)
+add_library(nitrogen_search SHARED
+    src/core/search/search_engine.cpp
+    src/core/bridge/search_bridge.cpp
+)
+target_include_directories(nitrogen_search PRIVATE ${NODE_ADDON_API_DIR})
+set_target_properties(nitrogen_search PROPERTIES PREFIX "" SUFFIX ".node")
+target_link_libraries(nitrogen_search ${CMAKE_JS_LIB})
+
 # ---- Platform-specific linking ----
 if(UNIX AND NOT APPLE)
     target_link_libraries(nitrogen_file_explorer stdc++fs)
     target_link_libraries(nitrogen_terminal stdc++fs util)
+    target_link_libraries(nitrogen_search stdc++fs)
 endif()
 
 # NAPI_VERSION 8 for broad Node.js compatibility
 target_compile_definitions(nitrogen_file_explorer PRIVATE NAPI_VERSION=8)
 target_compile_definitions(nitrogen_terminal PRIVATE NAPI_VERSION=8)
+target_compile_definitions(nitrogen_search PRIVATE NAPI_VERSION=8)
 
 

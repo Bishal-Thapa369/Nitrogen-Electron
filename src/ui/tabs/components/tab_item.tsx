@@ -10,7 +10,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 interface TabItemProps {
-  tab: { path: string; name: string };
+  tab: { path: string; name: string; isDirty?: boolean };
   isActive: boolean;
   onClick: () => void;
   onClose: (e: React.MouseEvent) => void;
@@ -47,11 +47,18 @@ export const TabItem: React.FC<TabItemProps> = React.memo(({
       <button
         onClick={onClose}
         className={cn(
-          "ml-2 p-0.5 rounded-md hover:bg-[var(--color-bg-active)] hover:text-red-400 transition-all duration-200 z-10",
-          isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          "ml-2 p-0.5 rounded-md hover:bg-[var(--color-bg-active)] hover:text-red-400 transition-all duration-200 z-10 flex items-center justify-center min-w-[18px]",
+          isActive || tab.isDirty ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         )}
       >
-        <X size={13} strokeWidth={2.5} />
+        {tab.isDirty && !isActive ? (
+          <div className="w-2 h-2 rounded-full bg-[var(--color-accent-primary)] group-hover:hidden" />
+        ) : null}
+        <X 
+          size={13} 
+          strokeWidth={2.5} 
+          className={cn(tab.isDirty && !isActive ? "hidden group-hover:block" : "block")} 
+        />
       </button>
       
       {isActive && (

@@ -8,7 +8,7 @@ import { useTerminalLogic } from './hooks/use_terminal_logic';
 import { useTerminalThemeSync } from './hooks/use_terminal_theme_sync';
 
 export const Terminal: React.FC = () => {
-  const { toggleTerminal } = useStore();
+  const { toggleTerminal, setFocusContext } = useStore();
   
   const { 
     terminalRef, xtermRef, isMaximized, clearTerminal, toggleMaximize, isTerminalOpen, theme 
@@ -20,7 +20,10 @@ export const Terminal: React.FC = () => {
   if (!isTerminalOpen) return null;
 
   return (
-    <div className={`flex flex-col bg-transparent text-[var(--color-text-secondary)] overflow-hidden ${isMaximized ? 'fixed inset-0 z-50 bg-[var(--color-bg-panel)]' : 'h-full'}`}>
+    <div 
+      className={`flex flex-col bg-transparent text-[var(--color-text-secondary)] overflow-hidden ${isMaximized ? 'fixed inset-0 z-50 bg-[var(--color-bg-panel)]' : 'h-full'}`}
+      onClick={() => setFocusContext('terminal')}
+    >
       
       <TerminalHeader 
         isMaximized={isMaximized}

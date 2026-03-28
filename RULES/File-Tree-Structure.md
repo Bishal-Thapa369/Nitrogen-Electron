@@ -5,103 +5,119 @@
 > These rules are non-negotiable and must be followed by the AI Assistant before any file modification.
 > 1. **MANDATORY PRE-READ:** Before making any change, the AI MUST read **Plan.md**, **Optimizations.md**, and **FIle-Rules.md** to understand the architectural context.
 > 2. **CONTEXTUAL AWARENESS:** After reading rules, the AI MUST read this **File-Tree-Structure.md** to confirm the current project state.
-> 3. **HALLUCINATION PREVENTION:** Every file in this project must have a 1-2 sentence description explaining its specific role. If a file is not in this list, it should not exist.
+> 3. **HALLUCINATION PREVENTION:** Every single source file in this project MUST have a 1-2 sentence description explaining its specific role. If a file exists in the repository, it MUST be listed here.
 > 4. **MANDATORY POST-UPDATE:** This document MUST be updated immediately after every file creation, deletion, or modification.
 > 5. **PERMANENCE:** These command rules are permanent and must never be removed or altered.
-> 6. **PROGRESS TRACKING:** Never remove or truncate data from **Progress.md**. Only append new achievements and update the current focus to maintain a complete historical record.
 
 ---
 
 # Current File Tree
 
-## 📂 Root
-- `/README.md` - Technical overview and build instructions for the Nitrogen Editor.
-- `/package.json` - Node.js configuration for the React/Electron frontend.
-- `/tsconfig.json` - TypeScript configuration for the frontend layers.
-- `/vite.config.ts` - Build configuration for the React frontend with API proxying.
-- `/index.html` - Entry point for the Chromium (Electron) frontend.
-- `/CMakeLists.txt` - Root CMake build file for the C++ native addon (cmake-js).
-- `/main.js` - Electron Main process entry point (ESM) that manages the native C++ bridge (N-API).
-- `/preload.cjs` - Electron Preload script for secure IPC and native exposure.
-- `/third_party/libvterm/` - External collection of libvterm source files for ANSI/VT100 state management.
+## 📂 Root 
+- `README.md` - Technical setup, build instructions, and architectural goals for the Nitrogen Editor.
+- `package.json` / `package-lock.json` - Node.js project management for the React/Electron layers.
+- `tsconfig.json` / `tsconfig.node.json` - TypeScript configuration for frontend and build tools.
+- `vite.config.ts` - React build and development server configuration.
+- `index.html` - Entrance for the Chromium-based UI.
+- `main.js` - Electron Main process entry point; orchestrates native C++ runtime and bridge.
+- `preload.cjs` - Electron Preload security layer; exposes high-performance IPC methods to the frontend.
+- `public/` - Static assets like `vite.svg` and `tauri.svg` served to the Chromium UI.
+- `src/assets/` - Internal React assets like `react.svg`.
+- `CMakeLists.txt` - CMake configuration for building the high-speed C++ native modules (bridges).
+- `.gitignore` - Standard filters for ignoring build artifacts, caches, and node_modules.
 
-## 📂 src/ui/ (Display Layer)
-- `src/ui/app.tsx` - Main React entry point for the editor UI.
-- `src/ui/main.tsx` - Bootstrapper for the React application.
-- `src/ui/styles/index.css` - Global styling including Tailwind 4 themes and custom glassmorphism.
-- `src/ui/sidebar/sidebar.tsx` - The 60-line structural orchestrator (Shell) for the recursive file explorer.
-- `src/ui/sidebar/components/` - Atomic Visual Skins (Pure `tsx` components).
-    - `file_row.tsx`: Single file item rendering (memoized).
-    - `sidebar_header.tsx`: "Explorer" title and options.
-    - `sticky_root.tsx`: Sticky root header with 4 action icons.
-    - `new_input_row.tsx`: Dynamic absolute-positioned creation input row.
-    - `empty_sidebar.tsx`: "No folder opened" view.
-    - `sidebar_footer.tsx`: Outline and Timeline section footers.
-- `src/ui/sidebar/hooks/` - Specialized Logic Subsystems.
-    - `use_sidebar_virtualization.ts`: Scroll math and row-slicing logic.
-    - `use_sidebar_creation.ts`: File/Folder creation state management.
-    - `use_sidebar_navigation.ts`: Multi-selection and tree traversal logic.
-    - `use_sidebar_shortcuts.ts`: Global keyboard event listeners (Ctrl+V, Delete, etc.).
-- `src/ui/sidebar/logic/` - The Orchestrator Hub.
-    - `use_sidebar_logic.ts`: Connects all sub-hooks to the main Sidebar shell.
-- `src/ui/sidebar/utils/` - Style helpers and icon mapping algorithms.
-- `src/ui/sidebar/context_menu/context_menu.tsx` - Right-click context menu (Rename, Delete, Cut, Copy, Paste, Duplicate).
-- `src/ui/editor/editor.tsx` - The clean structural orchestrator (Shell) for the Monaco-based text editor.
-- `src/ui/editor/components/` - Atomic UI Components.
-    - `empty_editor.tsx`: Premium "Nitrogen" empty state view (The "N" screen).
-- `src/ui/editor/hooks/` - Specialized Logic Subsystems.
-    - `use_editor_logic.ts`: The orchestrator hook for layout, cursor tracking, and mounting.
-    - `use_editor_theme.ts`: Premium Monaco theme engine for the "Nitrogen" aesthetic.
-- `src/ui/editor/utils/` - Editor utilities.
-    - `language_map.ts`: Extension-to-language mapping algorithm.
-- `src/ui/tabs/tabs.tsx` - The clean structural orchestrator (Shell) for the horizontal document tab list.
-- `src/ui/tabs/components/` - Atomic UI Components.
-    - `tab_item.tsx`: Individual tab component with close logic and active indicators.
-- `src/ui/tabs/hooks/` - Specialized Logic Subsystems.
-    - `use_tabs_logic.ts`: Hook for tab switching, reading file contents, and closing events.
-- `src/ui/tabs/utils/` - Tab utilities.
-    - `tab_icons.tsx`: Specialized file extension to themed-icon mapping.
-- `src/ui/status_bar/status_bar.tsx` - Informational status bar at the bottom.
-- `src/ui/top_bar/top_bar.tsx` - Application control bar at the top.
-- `src/ui/terminal/terminal.tsx` - The clean 40-line structural orchestrator (Shell) for the integrated terminal.
-- `src/ui/terminal/components/` - Atomic Visual Components.
-    - `terminal_header.tsx`: Tab navigation and action buttons (Clear, Maximize, Close).
-- `src/ui/terminal/hooks/` - Specialized Logic Subsystems.
-    - `use_terminal_logic.ts`: The XTerm and N-API engine.
-    - `use_terminal_theme_sync.ts`: Light/Dark mode visual synchronization.
-- `src/ui/terminal/utils/` - Global Terminal utilities.
-    - `terminal_themes.ts`: The 40+ line ANSI/Neon palette definitions.
-- `src/ui/command_palette/command_palette.tsx` - Quick-action command interface.
+## 📂 src/core/ (The C++ Engine & State Context)
 
-## 📂 src/core/ (C++ Backend & Logic)
-- `src/core/state/store.ts` - Central reactive state manager (Zustand). Now an orchestrator for atomic slices.
-- `src/core/state/types.ts` - Centralized interfaces for tree nodes, editor groups, and global state.
-- `src/core/state/utils/tree_helpers.ts` - Isolated recursive logic for tree merging, updating, and path resolution.
-- `src/core/state/slices/` - Specialized store fragments.
-    - `ui_slice.ts`: Global theme and layout toggles.
-    - `editor_slice.ts`: N-group split management, tab focus, and history tracking.
-    - `explorer_slice.ts`: Native C++ bridge interactions, bulk operations, and sidebar state.
-- `src/core/document/text_buffer/` - Directory for native editor buffer implementations.
-- `src/core/file_system/file_node.hpp` - FileNode struct for recursive tree representation.
-- `src/core/file_system/file_explorer.hpp` - FileExplorer class API (scan, expand, collapse, refresh).
-- `src/core/file_system/file_explorer.cpp` - Implementation using std::filesystem with depth-limited scanning.
-- `src/core/terminal/terminal_session.hpp` - Header for TerminalSession, managing PTY and libvterm states.
-- `src/core/terminal/terminal_session.cpp` - Implementation of PTY spawning (forkpty) and asynchronous PTY I/O thread.
-- `src/core/bridge/file_explorer_bridge.cpp` - N-API bridge exposing C++ FileExplorer to Node.js/Electron.
-- `src/core/bridge/terminal_bridge.cpp` - N-API bridge exposing the terminal backend via ThreadSafeFunction for real-time streaming.
+### 📂 bridge/
+- `file_explorer_bridge.cpp` - N-API implementation exposing high-performance disk scanning to Node.js.
+- `search_bridge.cpp` - N-API bridge for the asynchronous, multithreaded universal search engine.
+- `terminal_bridge.cpp` - Bridge for PTY-streaming using ThreadSafeFunctions for zero-latency terminal output.
 
+### 📂 file_system/ 
+- `file_explorer.cpp/hpp` - The core C++ engine for O(1) file scanning and lazy-loading recursive trees.
+- `file_node.hpp` - Shared data structure for representing file and folder metadata in native memory.
 
-## 📂 src/main/ipc/ (Modular IPC Handlers)
-- `src/main/ipc/file_operations.js` - IPC handlers for file rename, delete, move, and copy operations.
+### 📂 search/
+- `search_engine.cpp/hpp` - The multithreaded logic for scanning 100k+ files for query matches in filenames and content.
 
-## 📂 scripts/ (Tooling)
-- `scripts/ram-usages.sh` - Utility task to monitor and audit current Electron/Node process memory usage.
+### 📂 state/
+- `store.ts` - Main Zustand state orchestrator that merges atomic slices into a single source of truth.
+- `types.ts` - Central repository for all shared TypeScript interfaces (Tabs, Explorer, Search results).
+- `utils/tree_helpers.ts` - Utility functions for recursive tree updates and path transformations.
+- `slices/ui_slice.ts` - Handles global UI toggles, terminal visibility, and theme state.
+- `slices/editor_slice.ts` - Manages multi-group editor state, tabs, active filenames, and search queries.
+- `slices/explorer_slice.ts` - Direct state interface for the C++ file explorer and sidebar interaction.
 
-## 📂 RULES/ (Standard Procedures)
-- `RULES/FIle-Rules.md` - Strict architectural and directory conventions.
-- `RULES/File-Tree-Structure.md` - (This file) Mandatory project state and file roles.
-- `RULES/Progress.md` - Permanent historical achievement log and current mission focus.
-- `RULES/Architecture-to-Package.md` - Strategy for hybrid compilation and OS-specific bundling.
-- `RULES/Plugin-Architecture-Vision.md` - Roadmap for process-isolated extensions and NitroScript hooks.
-- `RULES/Optimizations.md` - Strategic roadmap for performance-first implementation.
-- `RULES/Plan.md` - The specialized architecture plan for C++ (Logic) and Electron (Display).
+### 📂 terminal/
+- `terminal_session.cpp/hpp` - Low-level PTY management (forkpty) and libvterm integration for native shell sessions.
+
+## 📂 src/main/ (Backend IPC Bridge Logic)
+
+### 📂 ipc/
+- `file_operations.js` - Electron IPC handlers for CRUD filesystem operations (Create, Rename, Delete).
+- `file_content.js` - Specialized bridge for chunked file loading (the foundation for the Piece Table buffer).
+
+## 📂 src/ui/ (Display & Interface Layer)
+
+### 📂 hooks/
+- `use_global_shortcuts.ts` - Global event listener that handles application-wide hotkeys like `Ctrl+K` and `Ctrl+Shift+P`.
+
+### 📂 sidebar/
+- `sidebar.tsx` - Shell component orchestrating the transition between Explorer and Search panels.
+- `components/search_panel.tsx` - Interface for universal project search and real-time result viewing.
+- `components/file_row.tsx` - High-performance virtualized row for displaying file tree items.
+- `components/sidebar_footer.tsx` / `sidebar_header.tsx` - Peripheral UI sections for section titles and status badges.
+- `components/sticky_root.tsx` - Main project root header with actionable icons for file/folder creation.
+- `components/new_input_row.tsx` - Contextual input field for naming new files or directories.
+- `components/empty_sidebar.tsx` - Placeholder view when no workspace is active.
+- `context_menu/context_menu.tsx` - Desktop-grade context menu for advanced file manipulation (Cut, Copy, Paste, Delete).
+- `hooks/use_sidebar_virtualization.ts` - Logic for managing scroll offsets and windowed rendering of large trees.
+- `hooks/use_sidebar_navigation.ts` - Logic for tree traversal, selection, and opening files into editor tabs.
+- `hooks/use_sidebar_shortcuts.ts` - Keyboard listeners confined to the sidebar (Deletion, Renaming, Navigation).
+- `hooks/use_sidebar_creation.ts` - State management for the file creation lifecycle.
+- `logic/use_sidebar_logic.ts` - Main orchestrator hook for the sidebar display logic.
+- `utils/sidebar_utils.tsx` - Specialized icon mappings and visual style calculation.
+
+### 📂 editor/
+- `editor.tsx` - Main shell for the text editor, managing groups and individual instances.
+- `editor_group.tsx` - Container for managing split-screen editor views.
+- `components/empty_editor.tsx` - The premium "N" screen when no document is open.
+- `hooks/use_editor_logic.ts` - Logic for mounting Monaco and managing the editor lifecycle.
+- `hooks/use_editor_theme.ts` - Custom-themed Monaco configuration for the high-end Nitrogen brand.
+- `hooks/use_editor_actions.ts` - Common editor functions (Saving, Formatting, Tab Closing).
+- `hooks/use_editor_shortcuts.ts` - Editor-specific keyboard shortcuts (Split view, Goto line).
+- `utils/language_map.ts` - Algorithmic mapping of file extensions to editor languages.
+
+### 📂 tabs/
+- `tabs.tsx` - Interactive tab bar for document management.
+- `components/tab_item.tsx`: Visual representation of an open file with close and modified indicators.
+- `components/tabs_toolbar.tsx`: Actions for splitting screens and zooming.
+- `hooks/use_tabs_logic.ts`: State transitions for switching focus between document tabs.
+- `utils/tab_icons.tsx`: Extension-to-icon mapping for tab visual identities.
+
+### 📂 terminal/
+- `terminal.tsx` - High-performance XTerm.js terminal wrapper.
+- `components/terminal_header.tsx` - Terminal control bar for clearing, maximizing, and closing.
+- `hooks/use_terminal_logic.ts` - Bootstrapper for the XTerm instance and native session link.
+- `hooks/use_terminal_shortcuts.ts` - Linux-style console shortcuts (Ctrl+Shift+C/V, Smart Ctrl+C).
+- `hooks/use_terminal_theme_sync.ts` - Micro-service for keeping terminal colors in sync with global theme.
+- `utils/terminal_themes.ts` - Central color palette for the ANSI terminal output.
+
+### 📂 status_bar/ / top_bar/
+- `status_bar.tsx`: Informational footer showing Git status, line counts, and encoding.
+- `top_bar.tsx`: Premium window title bar with system menu integration.
+
+### 📂 utils/
+- `cn.ts`: Standard Tailwind-merge utility for dynamic CSS classes.
+- `vite-env.d.ts`: Vite environment type definitions for TypeScript.
+
+---
+
+## 📂 RULES/ & scripts/
+- `RULES/Plan.md`: The development roadmap and architectural strategy.
+- `RULES/Progress.md`: Chronological log of implemented features.
+- `RULES/FIle-Rules.md`: Conventions for code styling and directory hierarchy.
+- `RULES/File-Tree-Structure.md`: (This file) 100% accurate map of repository contents.
+- `RULES/Architecture-to-Package.md`: Deployment and native-addon compilation strategies.
+- `RULES/Optimizations.md`: Roadmap for Piece Table and flyweight UI patterns.
+- `scripts/ram-usages.sh`: Utility script for performance auditing.

@@ -9,9 +9,16 @@ export interface FileTreeNode {
   children: FileTreeNode[];
 }
 
+export interface SearchResult {
+  path: string;
+  fileName: string;
+  line: number;
+  context: string;
+}
+
 export interface EditorGroup {
   id: string;
-  openTabs: { path: string; name: string }[];
+  openTabs: { path: string; name: string; isDirty?: boolean }[];
   activeFilePath: string | null;
   activeFileContent: string | null;
 }
@@ -22,6 +29,17 @@ export interface EditorState {
   rootPath: string | null;
   expandedFolders: string[];  // Set of expanded directory paths
   extensionMap: Record<number, string>; // Maps C++ typeId to string extension
+  
+  // Sidebar View Control
+  sidebarView: 'explorer' | 'search';
+  
+  // Persistent Search State
+  searchQuery: string;
+  searchResults: SearchResult[];
+  isSearching: boolean;
+  
+  // Focus & Context Control
+  focusContext: 'editor' | 'sidebar' | 'terminal' | 'palette' | null;
 
   // Editor Groups
   editorGroups: EditorGroup[];
@@ -45,6 +63,7 @@ export interface EditorState {
   closeFile: (filePath: string, groupId?: string) => void;
   setActiveFile: (filePath: string | null, groupId?: string) => void;
   setActiveFileContent: (content: string | null, groupId?: string) => void;
+  setFileDirty: (filePath: string, isDirty: boolean, groupId?: string) => void;
   setActiveGroup: (groupId: string) => void;
 
   setTheme: (theme: 'vs-dark' | 'light') => void;
@@ -56,6 +75,12 @@ export interface EditorState {
   toggleSplitScreen: () => void;
   closeOtherFiles: (filePath: string, groupId?: string) => void;
   closeAllFiles: (groupId?: string) => void;
+  setFocusContext: (context: 'editor' | 'sidebar' | 'terminal' | 'palette' | null) => void;
+  setSidebarView: (view: 'explorer' | 'search') => void;
+
+  setSearchQuery: (query: string) => void;
+  setSearchResults: (results: SearchResult[]) => void;
+  setIsSearching: (isSearching: boolean) => void;
 
   // Explorer Selection & Clipboard
   selectedPath: string | null;

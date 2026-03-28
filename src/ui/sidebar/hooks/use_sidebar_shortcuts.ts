@@ -4,10 +4,29 @@ import { useStore } from '../../../core/state/store';
 export const useSidebarShortcuts = () => {
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is actively typing in an input field
-      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
-
       const state = useStore.getState();
+
+      // Ctrl+Shift+F: Global Search (Universal Access)
+      if (e.ctrlKey && e.shiftKey && e.key === 'F') {
+        e.preventDefault();
+        state.setSidebarView('search');
+        if (!state.isSidebarOpen) state.toggleSidebar();
+        state.setFocusContext('sidebar'); // Ensure it gains focus
+        return;
+      }
+
+      // Ctrl+Shift+E: Explorer View (Universal Access)
+      if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+        e.preventDefault();
+        state.setSidebarView('explorer');
+        if (!state.isSidebarOpen) state.toggleSidebar();
+        state.setFocusContext('sidebar'); // Ensure it gains focus
+        return;
+      }
+
+      if (state.focusContext !== 'sidebar') return;
+      
+      // Don't trigger if user is actively typing in an input field
       
       if (e.ctrlKey || e.metaKey) {
         if (e.key === 'c' && state.selectedPaths.length > 0) {

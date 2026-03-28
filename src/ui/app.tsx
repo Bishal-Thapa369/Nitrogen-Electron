@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useStore } from '../core/state/store';
 import { Sidebar } from './sidebar/sidebar';
 import { EditorGroup } from './editor/editor_group';
@@ -6,6 +6,7 @@ import { StatusBar } from './status_bar/status_bar';
 import { TopBar } from './top_bar/top_bar';
 import { Terminal } from './terminal/terminal';
 import { CommandPalette } from './command_palette/command_palette';
+import { useGlobalShortcuts } from './hooks/use_global_shortcuts';
 import { Files, Search, GitBranch, Play, Settings, UserCircle, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -16,7 +17,10 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export default function App() {
-  const { theme, isTerminalOpen, toggleTerminal, isSidebarOpen, toggleSidebar, isSplitScreen, editorGroups } = useStore();
+  const { 
+    theme, isTerminalOpen, isSidebarOpen, toggleSidebar, 
+    isSplitScreen, editorGroups, sidebarView, setSidebarView 
+  } = useStore();
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [terminalHeight, setTerminalHeight] = useState(240);
   const isResizing = useRef(false);
@@ -25,21 +29,9 @@ export default function App() {
   const [isTerminalResizingActive, setIsTerminalResizingActive] = useState(false);
 
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        console.log('Manual save triggered');
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === '`') {
-        e.preventDefault();
-        toggleTerminal();
-      }
-    };
+  useGlobalShortcuts();
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleTerminal]);
+
 
   const startResizing = (_e: React.MouseEvent) => {
     isResizing.current = true;
@@ -117,17 +109,39 @@ export default function App() {
         {/* Activity Bar */}
         <div className="w-8 flex flex-col items-center py-4 space-y-4 text-[var(--color-text-tertiary)] select-none z-10 mr-3">
           <div 
-            onClick={toggleSidebar}
+            onClick={() => {
+              if (sidebarView === 'explorer' && isSidebarOpen) {
+                toggleSidebar();
+              } else {
+                setSidebarView('explorer');
+                if (!isSidebarOpen) toggleSidebar();
+              }
+            }}
             className={cn(
               "p-1 rounded-md cursor-pointer transition-all duration-200 shadow-sm",
-              isSidebarOpen 
+              isSidebarOpen && sidebarView === 'explorer'
                 ? "bg-[var(--color-accent-glow)] text-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
                 : "hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
             )}
           >
             <Files size={24} strokeWidth={2} />
           </div>
-          <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">
+          <div 
+            onClick={() => {
+              if (sidebarView === 'search' && isSidebarOpen) {
+                toggleSidebar();
+              } else {
+                setSidebarView('search');
+                if (!isSidebarOpen) toggleSidebar();
+              }
+            }}
+            className={cn(
+              "p-1 rounded-md cursor-pointer transition-all duration-200 shadow-sm",
+              isSidebarOpen && sidebarView === 'search'
+                ? "bg-[var(--color-accent-glow)] text-[var(--color-accent-primary)] shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
+                : "hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)]"
+            )}
+          >
             <Search size={24} strokeWidth={2} />
           </div>
           <div className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] hover:text-[var(--color-text-primary)] cursor-pointer transition-all duration-200">

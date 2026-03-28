@@ -11,13 +11,14 @@ export interface FileRowProps {
   isSelected: boolean;
   isActive: boolean;
   isCutTarget: boolean;
+  isSidebarFocused: boolean;
   onClick: (e: React.MouseEvent, node: FileTreeNode) => void;
   onContextMenu: (e: React.MouseEvent, node: FileTreeNode) => void;
   getIconByType: (typeId: number | undefined, isDirectory: boolean) => React.ReactNode;
 }
 
 export const FileRow = React.memo(({ 
-  node, level, absoluteIndex, isExpanded, isSelected, isActive, isCutTarget, 
+  node, level, absoluteIndex, isExpanded, isSelected, isActive, isCutTarget, isSidebarFocused,
   onClick, onContextMenu, getIconByType 
 }: FileRowProps) => {
   return (
@@ -26,10 +27,11 @@ export const FileRow = React.memo(({
       onContextMenu={(e) => onContextMenu(e, node)}
       className={cn(
         "absolute left-0 right-0 flex items-center cursor-pointer text-[13px] transition-all duration-150 ease-out group z-10",
-        isSelected || isActive ? "bg-[var(--color-bg-active)]" : "hover:bg-[var(--color-bg-hover)]",
-        isSelected && "ring-[0.5px] ring-inset ring-[var(--color-border-focus)]/30",
+        (isSelected || isActive) ? (isSidebarFocused ? "bg-[var(--color-bg-active)]" : "bg-[var(--color-bg-panel)]") : "hover:bg-[var(--color-bg-hover)]",
+        isSelected && isSidebarFocused && "ring-[0.5px] ring-inset ring-[var(--color-border-focus)]/30",
         isActive && "text-[var(--color-text-primary)] font-medium bg-[var(--color-accent-glow)]!",
-        isCutTarget && "opacity-40 grayscale-[50%]"
+        isSelected && !isSidebarFocused && "text-[var(--color-text-tertiary)]",
+        isCutTarget && "opacity-40 grayscale-[100%]"
       )}
       style={{ 
         top: `${absoluteIndex * ITEM_HEIGHT}px`,
@@ -66,6 +68,7 @@ export const FileRow = React.memo(({
     prev.isSelected === next.isSelected &&
     prev.isActive === next.isActive &&
     prev.isCutTarget === next.isCutTarget &&
+    prev.isSidebarFocused === next.isSidebarFocused &&
     prev.absoluteIndex === next.absoluteIndex
   );
 });

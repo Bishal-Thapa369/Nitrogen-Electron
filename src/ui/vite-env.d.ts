@@ -11,6 +11,10 @@ interface Window {
     refreshDirectory: (dirPath: string, force?: boolean) => Promise<any>;
     getTree: () => Promise<any>;
     getExtensions: () => Promise<Record<string, string>>;
+    // File Operations (Content)
+    saveFile: (filePath: string, content: string) => Promise<{ success: boolean; error?: string }>;
+    saveFileAs: (content: string, defaultPath: string) => Promise<{ success: boolean; filePath?: string; canceled?: boolean; error?: string }>;
+    searchAll: (query: string, rootPath: string) => Promise<Array<{ path: string; fileName: string; line: number; context: string }>>;
     readFile: (filePath: string) => Promise<string | null>;
 
     // File Operations

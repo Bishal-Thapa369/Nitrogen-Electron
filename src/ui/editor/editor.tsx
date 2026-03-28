@@ -3,6 +3,8 @@ import MonacoEditor from '@monaco-editor/react';
 import { useStore } from '../../core/state/store';
 import { EmptyEditor } from './components/empty_editor';
 import { useEditorLogic } from './hooks/use_editor_logic';
+import { useEditorActions } from './hooks/use_editor_actions';
+import { useEditorShortcuts } from './hooks/use_editor_shortcuts';
 import { cn } from '../utils/cn';
 
 /**
@@ -20,15 +22,25 @@ export const Editor: React.FC<{ groupId?: string }> = ({ groupId = 'primary' }) 
     editorLanguage, 
     editorTheme, 
     handleEditorDidMount,
+    editorRef
   } = useEditorLogic(groupId);
+  
+  const actions = useEditorActions(editorRef, groupId);
+  useEditorShortcuts(editorRef, actions);
 
-  const { setActiveGroup, activeGroupId } = useStore();
+  const { setActiveGroup, activeGroupId, setFileDirty, setFocusContext } = useStore();
   const isFocused = activeGroupId === groupId;
 
   // Show premium empty state if no file is selected
   if (!activeFilePath || activeFileContent === null) {
     return (
-      <div className="h-full w-full" onClick={() => setActiveGroup(groupId)}>
+      <div 
+        className="h-full w-full" 
+        onClick={() => {
+          setActiveGroup(groupId);
+          setFocusContext('editor');
+        }}
+      >
         <EmptyEditor />
       </div>
     );
@@ -48,7 +60,7 @@ export const Editor: React.FC<{ groupId?: string }> = ({ groupId = 'primary' }) 
     cursorBlinking: 'smooth' as any,
     cursorSmoothCaretAnimation: 'on' as any,
     smoothScrolling: true,
-    readOnly: true,
+    readOnly: false,
     scrollbar: {
       vertical: 'visible' as any,
       horizontal: 'visible' as any,
@@ -68,7 +80,10 @@ export const Editor: React.FC<{ groupId?: string }> = ({ groupId = 'primary' }) 
         "h-full w-full overflow-hidden bg-transparent transition-opacity duration-300",
         !isFocused ? "opacity-90" : "opacity-100"
       )}
-      onClick={() => setActiveGroup(groupId)}
+      onClick={() => {
+        setActiveGroup(groupId);
+        setFocusContext('editor');
+      }}
     >
       <MonacoEditor
         height="100%"
@@ -76,6 +91,7 @@ export const Editor: React.FC<{ groupId?: string }> = ({ groupId = 'primary' }) 
         theme={editorTheme}
         value={activeFileContent}
         onMount={handleEditorDidMount}
+        onChange={() => activeFilePath && setFileDirty(activeFilePath, true, groupId)}
         options={editorOptions}
       />
     </div>

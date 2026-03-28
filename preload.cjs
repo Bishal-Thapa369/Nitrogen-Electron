@@ -13,6 +13,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   refreshDirectory: (dirPath, force = false) => ipcRenderer.invoke('refresh-directory', dirPath, force),
   getTree: () => ipcRenderer.invoke('get-tree'),
   getExtensions: () => ipcRenderer.invoke('get-extensions'),
+  // File Operations (Content)
+  saveFile: (filePath, content) => ipcRenderer.invoke('fs-save-file', filePath, content),
+  saveFileAs: (content, defaultPath) => ipcRenderer.invoke('fs-save-as-file', content, defaultPath),
+  searchAll: (query, rootPath) => ipcRenderer.invoke('search-all', query, rootPath),
   readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
 
   // File Operations (Modular — src/main/ipc/file_operations.js)

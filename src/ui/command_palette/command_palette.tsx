@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../../core/state/store';
-import { Search, Command, Palette, XSquare } from 'lucide-react';
+import { Search, Palette, XSquare } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'motion/react';
@@ -36,11 +36,9 @@ export const CommandPalette: React.FC = () => {
   }, [isCommandPaletteOpen]);
 
   useEffect(() => {
+    if (!isCommandPaletteOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        toggleCommandPalette();
-      } else if (e.key === 'Escape' && isCommandPaletteOpen) {
+      if (e.key === 'Escape') {
         toggleCommandPalette();
       }
     };
@@ -101,8 +99,8 @@ export const CommandPalette: React.FC = () => {
                 autoComplete="off"
               />
               <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--color-text-tertiary)] bg-[var(--color-bg-hover)] px-2.5 py-1.5 rounded-md border border-[var(--color-border-subtle)] shadow-sm">
-                <Command size={12} />
-                <span>K</span>
+                <span className="text-[10px]">⇧</span>
+                <span>P</span>
               </div>
             </div>
             <div className="max-h-[400px] overflow-y-auto py-3 custom-scrollbar">
