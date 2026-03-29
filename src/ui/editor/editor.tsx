@@ -97,4 +97,3 @@ export const Editor: React.FC<{ groupId?: string }> = ({ groupId = 'primary' }) 
     </div>
   );
 };
-

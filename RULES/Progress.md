@@ -305,12 +305,21 @@
 - **Scrollbar Clipping Fix:** Eliminated `overflow-hidden` on the terminal instance wrapper, allowing the xterm.js scrollbar to remain functional for single-session views.
 - **State-Aware Re-Fitting:** Added global store listeners to the terminal instance, automatically triggering a re-fit when the terminal panel is toggled or resized.
 
+### 51. Modular Status Bar & Interactive Command Centers ✅
+- **Modular Shell Orchestration:** Successfully refactored the legacy status bar into a high-fidelity shell that manages 8 atomic, interactive command modules.
+- **Industrial RAM Monitor (Phase 1):** Implemented a real-time system monitor that polls the Nitrogen Logic Core and UI Shell memory usage every 2 seconds via IPC.
+
+### 52. Total App RAM Tracker ✅
+- **App-Wide Metrics (Total Recall):** Upgraded the RAM monitor to use `app.getAppMetrics()`, accurately summing Main Core, UI Shell, GPU Accel, and Utility processes into a single "TOTAL RAM" value.
+- **Interactive Breakdown Popup:** Built a live dashboard accessible by clicking the RAM label, providing a visual breakdown of where memory is being consumed across all Nitrogen subsystems.
+- **Zero-Flicker Polling:** Centralized metrics state management into the global store, ensuring that the breakdown and the status bar display always stay perfectly in sync.
+
 ---
 
 ## 🚀 Current Focus (Phase 3: Industrial Grammar & Hardware Acceleration)
 - **Hardware-Accelerated Editor Buffer:** Finalizing the high-speed rendering engine to manage industrial-grade project files with zero UI latency.
 - **Hardware-Accelerated Canvas:** Transitioning Monaco and Terminal rendering to a GPU-backed surface for 144Hz+ display performance on complex documents.
-- **Project-Wide Git Bridge:** Integrating high-speed native Git status tracking directly into the file explorer and status bar.
+- **Tree-sitter Native Integration:** High-speed syntax tokenization and AST parsing.
 
 ---
 ### 🏁 Phase 2: Professional Editor Tools (COMPLETED)

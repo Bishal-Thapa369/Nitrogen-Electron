@@ -78,6 +78,16 @@ export interface EditorState {
   activeTerminalId: string | null;
   isTerminalMaximized: boolean;
 
+  // Status Bar Modular State
+  indentSize: number;
+  insertSpaces: boolean;
+  encoding: 'UTF-8' | 'UTF-16' | 'Windows-1252';
+  eol: 'LF' | 'CRLF';
+  readOnly: boolean;
+  gitStatus: { branch: string; staged: number; unstaged: number } | null;
+  backgroundTasks: { id: string; name: string; status: 'running' | 'done' }[];
+  appMetrics: { totalMB: number; processes: { name: string; memoryMB: number; pid: number }[] } | null;
+
   // Actions
   setFileTree: (tree: FileTreeNode | null, rootPath: string | null) => void;
   updateExtensionMap: () => Promise<void>;
@@ -138,4 +148,14 @@ export interface EditorState {
   setTerminalSessionId: (terminalId: string, sessionId: number) => void;
   killAllTerminals: () => void;
   toggleTerminalMaximize: () => void;
+
+  // Status Bar Actions
+  setIndentOptions: (size: number, spaces: boolean) => void;
+  setEncoding: (encoding: 'UTF-8' | 'UTF-16' | 'Windows-1252') => void;
+  setEol: (eol: 'LF' | 'CRLF') => void;
+  setReadOnly: (readOnly: boolean) => void;
+  setGitStatus: (status: { branch: string; staged: number; unstaged: number } | null) => void;
+  addBackgroundTask: (id: string, name: string) => void;
+  removeBackgroundTask: (id: string) => void;
+  setAppMetrics: (metrics: { totalMB: number; processes: { name: string; memoryMB: number; pid: number }[] } | null) => void;
 }

@@ -38,5 +38,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   terminalResize: (sid, rows, cols) => ipcRenderer.send('terminal:resize', sid, rows, cols),
   onTerminalData: (callback) => ipcRenderer.on('terminal:data', (_event, sid, data) => callback(sid, data)),
 
+  // Status Bar / System
+  getMemoryUsage: () => ipcRenderer.invoke('get-memory-usage'),
+  getGitStatus: (rootPath) => ipcRenderer.invoke('get-git-status', rootPath),
 });
 

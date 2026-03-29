@@ -2,6 +2,10 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 import { registerFileOperations } from './src/main/ipc/file_operations.js';
 import { registerFileContentOperations } from './src/main/ipc/file_content.js';
 
@@ -168,6 +172,67 @@ function createWindow() {
         await walk(rootPath);
     }
     return files;
+  });
+
+  // ---- Status Bar / System IPC ----
+  ipcMain.handle('get-memory-usage', () => {
+    // app.getAppMetrics() returns metrics for ALL processes (Main, Renderer, GPU, etc.)
+    const metrics = app.getAppMetrics();
+    
+    const processes = metrics.map(m => {
+      let name = m.type;
+      if (m.type === 'Tab' || m.type === 'Renderer') name = 'UI Shell';
+      if (m.type === 'Browser') name = 'Main Core';
+      if (m.type === 'GPU') name = 'GPU Accel';
+      if (m.type === 'Utility') name = 'Node Helper';
+
+      return {
+        pid: m.pid,
+        name: name,
+        type: m.type,
+        memoryMB: Math.round(m.memory.workingSetSize / 1024)
+      };
+    });
+
+    // Sum up everything
+    const totalMB = processes.reduce((acc, p) => acc + p.memoryMB, 0);
+
+    return {
+      totalMB,
+      processes
+    };
+  });
+
+  ipcMain.handle('get-git-status', async (_event, rootPath) => {
+    if (!rootPath) return null;
+    try {
+      // Get current branch
+      const branchTask = execAsync('git rev-parse --abbrev-ref HEAD', { cwd: rootPath });
+      // Get counts of staged/unstaged changes
+      const statusTask = execAsync('git status --porcelain', { cwd: rootPath });
+      
+      const [{ stdout: branch }, { stdout: status }] = await Promise.all([branchTask, statusTask]);
+      
+      const lines = status.split('\n').filter(Boolean);
+      let staged = 0;
+      let unstaged = 0;
+      
+      lines.forEach(line => {
+        const x = line[0];
+        const y = line[1];
+        if (x !== ' ' && x !== '?') staged++;
+        if (y !== ' ') unstaged++;
+      });
+
+      return {
+        branch: branch.trim(),
+        staged,
+        unstaged
+      };
+    } catch (err) {
+      // Not a git repo or git not installed
+      return null;
+    }
   });
 }
 

@@ -26,15 +26,6 @@ This industrial-grade roadmap outlines the transition of Nitrogen from an elite 
     - `Letter Keys`: Jump to next file matching the character (native OS-style search).
 - **Benefit:** Professional **100% Keyboard-Driven Workflow**, keeping hands on the home row.
 
-### 4. 🎨 Pillar IV: Minimalist & Interactive Status Bar Actions (Contextual Utility)
-**Current Status:** The status bar provides a premium aesthetic but remains largely informational. It does not allow for real-time configuration of the active editor buffer or system state.
-
-**The Industrial Fix:**
-- **Dynamic Language Selection:** Make the "Language" name clickable to trigger a fuzzy-finder pop-up for switching Monaco syntax highlighting (e.g., from Plain Text to C++/JavaScript).
-- **Interactive Formatting Control:** Add click handlers to the "Spaces: 2" indicator to toggle indentation settings or convert between Tabs and Spaces globally.
-- **Fast Travel (Go to Line):** Link the "Line/Col" tracker to a `Ctrl+G` prompt for instant vertical navigation across large source files.
-- **Real-Time Git Toggles:** Convert the Git branch indicator into a branch-switching menu.
-- **Benefit:** High-speed contextual access to common editor commands directly from the footer.
 
 ---
 
@@ -43,7 +34,6 @@ This industrial-grade roadmap outlines the transition of Nitrogen from an elite 
 | :--- | :--- | :--- | :--- |
 | **Persistence** | CRITICAL | Core State / Storage | Zero Workflow Loss |
 | **Navigation** | MEDIUM | Sidebar UI / Hooks | Mouse-Free Operation |
-| **Utility** | POLISH | Status Bar / Editor | Contextual Control |
 
 ---
 **Status:** DRAFT (Phase 4 Design Document)

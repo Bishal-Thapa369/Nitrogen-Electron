@@ -109,8 +109,20 @@
 - `utils/terminal_themes.ts` - Central color palette for the ANSI/VT-100 terminal output.
 - `utils/terminal_events.ts` - Global event emitter for cross-tab terminal communication and data routing.
 
-### 📂 status_bar/ / top_bar/
-- `status_bar.tsx`: Informational footer showing Git status, line counts, terminal toggles, and encoding.
+### 📂 status_bar/
+- `status_bar.tsx`: The Modular Shell that orchestrates 8 atomic command modules.
+- `hooks/use_status_bar_state.ts`: Central logic for the status bar, managing periodic Git polling, memory refresh, and internal popup states.
+- `popups/ram_breakdown.tsx`: Premium interactive dashboard showing detailed RAM metrics for all Nitrogen processes (Main, UI, GPU, Utility).
+- `components/module_a_language.tsx`: Fuzzy-search trigger for Monaco syntax modes.
+- `components/module_b_indentation.tsx`: Quick-toggle for Spaces/Tabs and indent size.
+- `components/module_c_fast_travel.tsx`: Go-to-Line navigation via Ln/Col tracker.
+- `components/module_d_git_sync.tsx`: Real-time branch monitoring and change counts.
+- `components/module_e_ram_monitor.tsx`: Industrial-grade monitor displaying the 'TOTAL RAM' footprint across the whole app.
+- `components/module_f_format_guard.tsx`: Global "Prettier" formatting trigger.
+- `components/module_g_encoding_lock.tsx`: File integrity toggles (UTF-8, LF/CRLF, Read-Only).
+- `components/module_h_notifications.tsx`: Atomic progress hub for background C++ tasks.
+
+### 📂 top_bar/
 - `top_bar.tsx`: Premium window title bar with system menu integration.
 
 ### 📂 command_palette / commands /

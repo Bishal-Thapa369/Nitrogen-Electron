@@ -14,6 +14,16 @@ export const createUISlice: StateCreator<EditorState, [], [], Partial<EditorStat
   activeTerminalId: 'term-default',
   isTerminalMaximized: false,
 
+  // Status Bar Modular State
+  indentSize: 2,
+  insertSpaces: true,
+  encoding: 'UTF-8',
+  eol: 'LF',
+  readOnly: false,
+  gitStatus: null,
+  backgroundTasks: [],
+  appMetrics: null,
+
   setTheme: (theme) => {
     localStorage.setItem('theme', theme);
     set({ theme });
@@ -91,4 +101,18 @@ export const createUISlice: StateCreator<EditorState, [], [], Partial<EditorStat
   }),
 
   toggleTerminalMaximize: () => set((state) => ({ isTerminalMaximized: !state.isTerminalMaximized })),
+
+  // Status Bar Actions
+  setIndentOptions: (size, spaces) => set({ indentSize: size, insertSpaces: spaces }),
+  setEncoding: (encoding) => set({ encoding }),
+  setEol: (eol) => set({ eol }),
+  setReadOnly: (readOnly) => set({ readOnly }),
+  setGitStatus: (status) => set({ gitStatus: status }),
+  addBackgroundTask: (id, name) => set((state) => ({
+    backgroundTasks: [...state.backgroundTasks, { id, name, status: 'running' }]
+  })),
+  removeBackgroundTask: (id) => set((state) => ({
+    backgroundTasks: state.backgroundTasks.filter((t) => t.id !== id)
+  })),
+  setAppMetrics: (metrics) => set({ appMetrics: metrics }),
 });
