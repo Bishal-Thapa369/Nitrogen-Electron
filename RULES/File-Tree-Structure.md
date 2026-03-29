@@ -74,6 +74,7 @@
 - `hooks/use_sidebar_virtualization.ts` - Logic for managing scroll offsets and windowed rendering of large trees.
 - `hooks/use_sidebar_navigation.ts` - Logic for tree traversal, selection, and opening files into editor tabs.
 - `hooks/use_sidebar_shortcuts.ts` - Keyboard listeners confined to the sidebar (Deletion, Renaming, Navigation).
+- `hooks/use_sidebar_keyboard_nav.ts` - High-performance keyboard navigation engine for linear tree traversal (Vim keys, Arrows, OS-style Fast Jump).
 - `hooks/use_sidebar_creation.ts` - State management for the file creation lifecycle.
 - `logic/use_sidebar_logic.ts` - Main orchestrator hook for the sidebar display logic.
 - `utils/sidebar_utils.tsx` - Specialized icon mappings and visual style calculation.
