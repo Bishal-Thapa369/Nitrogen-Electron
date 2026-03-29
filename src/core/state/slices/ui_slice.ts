@@ -4,7 +4,7 @@ import { EditorState } from '../types';
 export const createUISlice: StateCreator<EditorState, [], [], Partial<EditorState>> = (set) => ({
   theme: (localStorage.getItem('theme') as any) || 'vs-dark',
   isCommandPaletteOpen: false,
-  isTerminalOpen: true,
+  isTerminalOpen: false,
   isSidebarOpen: true,
   isQuickOpenOpen: false,
   autoSave: true,

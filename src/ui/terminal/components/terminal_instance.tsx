@@ -25,7 +25,7 @@ export const TerminalInstance: React.FC<TerminalInstanceProps> = ({
       }`}
     >
       <div 
-        className="absolute inset-[1px] rounded-t-[2px] rounded-b-[10px] overflow-hidden border border-[var(--color-border-subtle)]"
+        className="absolute inset-[1px] rounded-t-[2px] rounded-b-[10px] border border-[var(--color-border-subtle)]"
         style={{ 
           backgroundColor: '#000000',
           boxShadow: isActive ? 'inset 0 0 20px rgba(59, 130, 246, 0.05)' : 'none'

@@ -293,6 +293,18 @@
 - **Sibling Discovery Popups:** Created interactive breadcrumb nodes that allow users to quickly switch between sibling files or navigate parent directories without the sidebar.
 - **Dynamic Orientation:** Breadcrumbs automatically update based on the active editor split, providing perfect spatial awareness in complex multi-group layouts.
 
+### 49. Global Sidebar Find & Replace (Ctrl+Shift+F) ✅
+- **Native Content Scanner:** Successfully bridged the high-speed C++ `SearchEngine` content scanner to a dedicated sidebar search panel, enabling project-wide text discovery.
+- **Multithreaded Performance:** Nitrogen now scans both project filenames and file content buffers simultaneously, finding matches like "function main()" across 10,000+ files in milliseconds.
+- **Integrated Results View:** Search results are now virtualized and presented in our high-performance sidebar engine, supporting instant navigation to the exact file and line on click.
+- **State Persistence:** Search results are globally tracked in the Zustand store, ensuring that users can toggle between explorer and search without losing their current query context.
+
+### 50. Industrial-Grade Terminal UX & Shortcut Reliability ✅
+- **Global Shortcut Perfection (`Ctrl+``):** Migrated from `e.key` to `e.code === 'Backquote'`, ensuring the terminal toggle is 100% layout-independent and reliable even when xterm.js has focus.
+- **Animation-Synced Fitting:** Engineered a 350ms delay for the terminal `fitAddon` to perfectly synchronize with the 300ms CSS opening animation, ensuring zero-latency layout accuracy.
+- **Scrollbar Clipping Fix:** Eliminated `overflow-hidden` on the terminal instance wrapper, allowing the xterm.js scrollbar to remain functional for single-session views.
+- **State-Aware Re-Fitting:** Added global store listeners to the terminal instance, automatically triggering a re-fit when the terminal panel is toggled or resized.
+
 ---
 
 ## 🚀 Current Focus (Phase 3: Industrial Grammar & Hardware Acceleration)
@@ -304,6 +316,7 @@
 ### 🏁 Phase 2: Professional Editor Tools (COMPLETED)
 - [x] Concurrent Multi-Tab Terminal Sessions.
 - [x] Elite Quick Open (Ctrl+P) Project Search.
+- [x] Global Content Search (Ctrl+Shift+F).
 - [x] Global Layout Maximization (Immersive Mode).
 - [x] Multi-Group Editor Support with Smart Focus.
 - [x] Professional History (Undo/Redo) and Persistence (Ctrl+S).

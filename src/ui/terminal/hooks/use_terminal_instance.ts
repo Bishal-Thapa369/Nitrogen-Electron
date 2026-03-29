@@ -102,14 +102,19 @@ export const useTerminalInstance = (terminalId: string, sessionId: number | null
   }, [sessionId, activeTerminalId]);
 
   // Handle active focus and resize
+  const { isTerminalOpen } = useStore();
+  
   useEffect(() => {
-    if (isActive && xtermRef.current) {
-      setTimeout(() => {
+    if (isActive && isTerminalOpen && xtermRef.current) {
+      // 350ms ensures the 300ms CSS animation in App.tsx has finished
+      // so fitAddon calculates based on the final expanded dimensions.
+      const timer = setTimeout(() => {
         fitAddonRef.current?.fit();
         xtermRef.current?.focus();
-      }, 50);
+      }, 350);
+      return () => clearTimeout(timer);
     }
-  }, [isActive]);
+  }, [isActive, isTerminalOpen]);
 
   // Handle theme changes
   useEffect(() => {

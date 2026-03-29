@@ -57,7 +57,7 @@ export const setupTerminalShortcuts = (term: XTerm) => {
     // ---- Global App Shortcuts Bypass ----
     // This allows xterm to ignore the keystroke, bubbling it up to the global window listener (use_global_shortcuts)
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') return false; // Open Folder
-    if ((e.ctrlKey || e.metaKey) && e.key === '`') return false; // Toggle Terminal
+    if ((e.ctrlKey || e.metaKey) && e.code === 'Backquote') return false; // Toggle Terminal
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') return false; // Save File
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f') return false; // Global Search
     if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'e') return false; // Global Explorer

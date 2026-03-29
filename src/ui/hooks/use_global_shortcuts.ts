@@ -14,7 +14,7 @@ export const useGlobalShortcuts = () => {
       }
 
       // Toggle Terminal: Ctrl+`
-      if ((e.metaKey || e.ctrlKey) && e.key === '`') {
+      if ((e.metaKey || e.ctrlKey) && e.code === 'Backquote') {
         e.preventDefault();
         toggleTerminal();
       }
