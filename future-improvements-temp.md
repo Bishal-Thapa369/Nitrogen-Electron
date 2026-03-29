@@ -13,16 +13,8 @@ This industrial-grade roadmap outlines the transition of Nitrogen from an elite 
 - **Background Terminal Resurrection:** Map existing PIDs or re-spawn identical terminal sessions upon re-entry, ensuring zero workflow disruption.
 - **Benefit:** Transition from a session-based editor to a **Persistent Development Environment**.
 
-### 2. 🔠 Pillar II: Global Sidebar Find & Replace (Native Content Discovery)
-**Current Status:** Our high-speed `Ctrl+P` fuzzy search efficiently discovers filenames, but Nitrogen currently lacks a project-wide content-search engine.
 
-**The Industrial Fix:**
-- **C++ Multi-Threaded Content Scanner:** Bridge the existing `SearchEngine.cpp` to a new `Ctrl+Shift+F` sidebar view. 
-- **Real-Time Result Virtualization:** Utilize our O(1) virtualization engine to display 10,000+ search matches across the project with zero UI stutter.
-- **Regex & Case-Sensitivity:** Add professional-grade filtering toggles to the search input, allowing for high-fidelity content discovery.
-- **Benefit:** Instant, project-wide code discovery that scales to repositories with 100k+ files.
-
-### 3. 📂 Pillar III: Sidebar Keyboard-Only Navigation (Power-User Flux)
+### 2. 📂 Pillar III: Sidebar Keyboard-Only Navigation (Power-User Flux)
 **Current Status:** The sidebar tree is currently a mouse-centric UI. While visually premium, it forces the user to break their terminal/editor focus to expand folders or select files.
 
 **The Industrial Fix:**
@@ -50,7 +42,6 @@ This industrial-grade roadmap outlines the transition of Nitrogen from an elite 
 | Category | Priority | System Impact | UX Goal |
 | :--- | :--- | :--- | :--- |
 | **Persistence** | CRITICAL | Core State / Storage | Zero Workflow Loss |
-| **Search** | HIGH | C++ Bridge / UI | Instant Content Discovery |
 | **Navigation** | MEDIUM | Sidebar UI / Hooks | Mouse-Free Operation |
 | **Utility** | POLISH | Status Bar / Editor | Contextual Control |
 

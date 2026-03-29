@@ -38,7 +38,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   terminalResize: (sid, rows, cols) => ipcRenderer.send('terminal:resize', sid, rows, cols),
   onTerminalData: (callback) => ipcRenderer.on('terminal:data', (_event, sid, data) => callback(sid, data)),
 
-  // Piece Table (C++ Chunk-Based Editor Engine)
+
   pieceTableLoadFile: (filePath) => ipcRenderer.invoke('piece-table:load-file', filePath),
   pieceTableGetLines: (filePath, startLine, count) => ipcRenderer.invoke('piece-table:get-lines', filePath, startLine, count),
   pieceTableGetLineCount: (filePath) => ipcRenderer.invoke('piece-table:get-line-count', filePath),
