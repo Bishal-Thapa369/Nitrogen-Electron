@@ -55,7 +55,7 @@
 
 ### 📂 ipc/
 - `file_operations.js` - Electron IPC handlers for CRUD filesystem operations (Create, Rename, Delete).
-- `file_content.js` - Specialized bridge for chunked file loading (the foundation for the Piece Table buffer).
+- `file_content.js` - Specialized bridge for high-speed file loading and saving.
 
 ## 📂 src/ui/ (Display & Interface Layer)
 
@@ -130,5 +130,5 @@
 - `RULES/FIle-Rules.md`: Conventions for code styling and directory hierarchy.
 - `RULES/File-Tree-Structure.md`: (This file) 100% accurate map of repository contents.
 - `RULES/Architecture-to-Package.md`: Deployment and native-addon compilation strategies.
-- `RULES/Optimizations.md`: Roadmap for Piece Table and flyweight UI patterns.
+- `RULES/Optimizations.md`: Roadmap for high-performance UI and backend patterns.
 - `scripts/ram-usages.sh`: Utility script for performance auditing.

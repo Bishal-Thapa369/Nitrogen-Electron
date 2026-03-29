@@ -8,7 +8,7 @@ This document explains exactly how the "loose parts" of our industrial-grade hyb
 Nitrogen operates on a **Calculation Off-load Strategy**. We don't just "run JS"; we treat JavaScript as the **Presenter** and C++ as the **Engine**.
 
 ### 🧩 The Three Core Domains:
-1.  **Native Domain (The Engine):** C++17 Core managing recursive file scanning, PTY management, and high-performance Piece-Table text buffers.
+1.  **Native Domain (The Engine):** C++17 Core managing recursive file scanning, PTY management, and high-performance multithreaded search.
 2.  **Logic Domain (The Bridge):** Node-API (N-API) providing the zero-latency "handshake" between C++ and JavaScript.
 3.  **Display Domain (The Shell):** React 19 and Tailwind 4.0 inside an Electron/Chromium shell, providing a premium glassy UI.
 
