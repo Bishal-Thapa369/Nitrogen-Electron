@@ -12,13 +12,14 @@ export interface FileRowProps {
   isActive: boolean;
   isCutTarget: boolean;
   isSidebarFocused: boolean;
+  isNavFocused: boolean;
   onClick: (e: React.MouseEvent, node: FileTreeNode) => void;
   onContextMenu: (e: React.MouseEvent, node: FileTreeNode) => void;
   getIconByType: (typeId: number | undefined, isDirectory: boolean) => React.ReactNode;
 }
 
 export const FileRow = React.memo(({ 
-  node, level, absoluteIndex, isExpanded, isSelected, isActive, isCutTarget, isSidebarFocused,
+  node, level, absoluteIndex, isExpanded, isSelected, isActive, isCutTarget, isSidebarFocused, isNavFocused,
   onClick, onContextMenu, getIconByType 
 }: FileRowProps) => {
   return (
@@ -31,8 +32,10 @@ export const FileRow = React.memo(({
         isSelected && isSidebarFocused && "ring-[0.5px] ring-inset ring-[var(--color-border-focus)]/30",
         isActive && "text-[var(--color-text-primary)] font-medium bg-[var(--color-accent-glow)]!",
         isSelected && !isSidebarFocused && "text-[var(--color-text-tertiary)]",
+        isNavFocused && isSidebarFocused && "ring-1 ring-inset ring-[var(--color-accent-primary)]/60 bg-[var(--color-accent-primary)]/10 shadow-[0_0_15px_-5px_var(--color-accent-primary)]",
         isCutTarget && "opacity-40 grayscale-[100%]"
       )}
+      data-path={node.path}
       style={{ 
         top: `${absoluteIndex * ITEM_HEIGHT}px`,
         height: `${ITEM_HEIGHT}px`,
@@ -69,6 +72,7 @@ export const FileRow = React.memo(({
     prev.isActive === next.isActive &&
     prev.isCutTarget === next.isCutTarget &&
     prev.isSidebarFocused === next.isSidebarFocused &&
+    prev.isNavFocused === next.isNavFocused &&
     prev.absoluteIndex === next.absoluteIndex
   );
 });

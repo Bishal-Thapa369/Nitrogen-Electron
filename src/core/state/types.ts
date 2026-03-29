@@ -121,7 +121,9 @@ export interface EditorState {
   // Explorer Selection & Clipboard
   selectedPath: string | null;
   selectedPaths: string[];
+  navigationFocusPath: string | null;
   setSelectedPath: (path: string | null, multi?: boolean) => void;
+  setNavigationFocusPath: (path: string | null) => void;
   setSelectedPaths: (paths: string[]) => void;
   selectAll: (targetPath?: string) => void;
   collapseAll: () => void;

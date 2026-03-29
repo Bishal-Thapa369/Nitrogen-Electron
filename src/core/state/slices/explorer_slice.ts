@@ -9,6 +9,7 @@ export const createExplorerSlice: StateCreator<EditorState, [], [], Partial<Edit
   extensionMap: {},
   selectedPath: null,
   selectedPaths: [],
+  navigationFocusPath: null,
   clipboardItems: null,
 
   setFileTree: (tree, rootPath) => {
@@ -42,8 +43,11 @@ export const createExplorerSlice: StateCreator<EditorState, [], [], Partial<Edit
 
   setSelectedPath: (path, multi = false) => set((state) => ({ 
     selectedPath: path, 
+    navigationFocusPath: path, // Sync nav focus with click
     selectedPaths: multi ? state.selectedPaths : (path ? [path] : []) 
   })),
+
+  setNavigationFocusPath: (path) => set({ navigationFocusPath: path }),
 
   setSelectedPaths: (paths) => set({ selectedPaths: paths }),
 

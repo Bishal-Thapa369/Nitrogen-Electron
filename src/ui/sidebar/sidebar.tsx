@@ -12,6 +12,7 @@ import { NewInputRow } from './components/new_input_row';
 import { EmptySidebar } from './components/empty_sidebar';
 import { SidebarFooter } from './components/sidebar_footer';
 import { SearchPanel } from './components/search_panel';
+import { useSidebarKeyboardNav } from './hooks/use_sidebar_keyboard_nav';
 
 export const Sidebar: React.FC = () => {
   const { 
@@ -20,10 +21,14 @@ export const Sidebar: React.FC = () => {
     contextMenu, setContextMenu, newInput, setNewInput, newInputValue, setNewInputValue, inputRef,
     handleContextMenu, handleNodeClick, startCreation, handleCreateSubmit, handleCreateKeyDown,
     visibleItems, totalHeight, startIndex,
-    refreshRoot, toggleFolder, setSelectedPath, setSelectedPaths
+    refreshRoot, toggleFolder, setSelectedPath, setSelectedPaths,
+    flattenedVisibleNodes
   } = useSidebarLogic();
 
-  const { sidebarView, focusContext, setFocusContext } = useStore();
+  const { sidebarView, focusContext, setFocusContext, navigationFocusPath } = useStore();
+
+  // Initialize Keyboard Navigation Engine
+  useSidebarKeyboardNav({ flattenedVisibleNodes, containerRef });
 
   const handleOpenFolder = async () => {
     try {
@@ -129,6 +134,7 @@ export const Sidebar: React.FC = () => {
                       isActive={activeFilePath === node.path}
                       isCutTarget={clipboardItems?.type === 'cut' && clipboardItems.paths.includes(node.path)}
                       isSidebarFocused={focusContext === 'sidebar'}
+                      isNavFocused={navigationFocusPath === node.path}
                       onClick={handleNodeClick} onContextMenu={handleContextMenu} getIconByType={getIconByType}
                     />
                   );

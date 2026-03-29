@@ -111,6 +111,7 @@ export const useSidebarLogic = () => {
     ...finalVirtualization,
     contextMenu, setContextMenu, ...creation,
     handleContextMenu, ...navigation,
-    refreshRoot, toggleFolder, setSelectedPath, setSelectedPaths
+    refreshRoot, toggleFolder, setSelectedPath, setSelectedPaths,
+    flattenedVisibleNodes: augmentedVisibleNodes
   };
 };
